@@ -16,3 +16,5 @@ venv/
 models/
 .ipynb_checkpoints/
 NOTAS-SPECKIT.md
+.claude/
+
