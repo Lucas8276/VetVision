@@ -1,0 +1,25 @@
+version: 1.0.0
+modelo_base: densenet121
+pretrained_on: torchxrayvision_chest_xray
+arquitectura: cascada_2_etapas
+
+input:
+  formato: RGB
+  size: [512, 512]
+  canales: 3
+  normalizacion: imagenet_mean_std
+
+etapas:
+  etapa_1_triaje:
+    input_shape: [3, 512, 512]
+    output_shape: [2]         # SANO, NO_SANO
+    activacion_salida: softmax
+  etapa_2_diagnostico:
+    input_shape: [3, 512, 512]
+    output_shape: [4]         # ALVEOLAR, EFUSION_PLEURAL, INTERSTICIAL, OTRO
+    activacion_salida: sigmoid   # multi_label
+    condicion: solo_si_etapa_1_predice_NO_SANO
+
+export:
+  formato: onnx
+  opset: 17

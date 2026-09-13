@@ -1,0 +1,17 @@
+data/raw/
+data/processed/
+*.jpg
+*.png
+*.ddo
+*.hq
+*.std
+*.dsp
+*.edk
+*.edr
+mlruns/
+__pycache__/
+*.pyc
+.env
+venv/
+models/
+.ipynb_checkpoints/

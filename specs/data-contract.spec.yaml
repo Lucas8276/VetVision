@@ -1,0 +1,24 @@
+version: 1.0.0
+fuente: FCR_PRIMA
+formato_archivos_por_paciente:
+  jpg_pesado:
+    bit_depth_real: 8   # standard JPEG, aunque venga de fuente 16-bit
+    uso: entrenamiento_principal
+  jpg_liviano:
+    bit_depth_real: 8
+    uso: preview_ui / fallback
+    riesgo_conocido: "posible texto quemado si 'Salida de anotación: Sí'"
+  txt_metadata:
+    campos_obligatorios:
+      - id_paciente
+      - region_anatomica
+      - vista        # LAT, VD, DV, AP
+      - especie       # CANINO, FELINO
+      - modalidad     # CR
+proyecciones_admitidas: [LAT, VD, DV]
+especies_admitidas: [CANINO, FELINO]
+resolucion_minima_px: 512
+anonimizacion:
+  campos_a_eliminar_antes_de_subir_a_cloud:
+    - nombre_paciente
+    - id_paciente_original   # reemplazar por hash interno
