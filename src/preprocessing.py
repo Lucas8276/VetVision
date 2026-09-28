@@ -5,6 +5,12 @@ def normalizar_jpg_veterinario(jpg_path, apply_clahe=True, size=512):
     """
     Normaliza el jpg 'pesado' (fuente principal de entrenamiento).
     Ya NO se asume 16-bit: se trabaja directo sobre 8-bit.
+
+    Devuelve un array 2D (escala de grises, uint8), NO RGB: el backbone de
+    TorchXRayVision (src/model.py) espera 1 solo canal de entrada, no 3 - ver
+    specs/002-etapa0-torax-clasificador/research.md, Decision 6. La conversion
+    a rango [-1024, 1024] que ese backbone espera se aplica en src/dataset.py
+    (xrv.utils.normalize), no aca.
     """
     img = cv2.imread(str(jpg_path), cv2.IMREAD_GRAYSCALE)
     if img is None:
@@ -15,5 +21,4 @@ def normalizar_jpg_veterinario(jpg_path, apply_clahe=True, size=512):
         img = clahe.apply(img)
 
     img = cv2.resize(img, (size, size), interpolation=cv2.INTER_AREA)
-    img_rgb = cv2.cvtColor(img, cv2.COLOR_GRAY2RGB)
-    return img_rgb
+    return img

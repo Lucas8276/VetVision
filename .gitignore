@@ -9,6 +9,7 @@ data/processed/
 *.edk
 *.edr
 mlruns/
+mlflow.db
 __pycache__/
 *.pyc
 .env

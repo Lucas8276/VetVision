@@ -1,7 +1,11 @@
-version: 1.0.0
-etapa_0_region_anatomica:
+version: 1.1.0
+etapa_0_torax:
   fuente: automatica_desde_txt
-  clases: [CERVICAL, TORAX, ABDOMEN, PELVIS, EXTREMIDADES]
+  # binario, no clasifica las 6 regiones entre si: el resto del pipeline
+  # (etapa_1/etapa_2) es exclusivamente toracico, asi que esta etapa solo
+  # filtra torax vs no-torax. CERVICAL/ABDOMEN/PELVIS/EXTREMIDADES/CRANEO
+  # colapsan a NO_TORAX. Ver specs/002-etapa0-torax-clasificador/
+  clases: [TORAX, NO_TORAX]
   requiere_anotacion_manual: false
 
 etapa_1_triaje:

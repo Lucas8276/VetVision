@@ -2,16 +2,16 @@ import argparse
 
 import torch
 
-from src.dataset import REGIONES_A_IDX
+from src.dataset import ETIQUETAS_A_IDX
 from src.model import build_model_etapa0
 
 
 def exportar_onnx(model_path, output_path="models/etapa0_region.onnx", opset=17):
-    model = build_model_etapa0(num_classes=len(REGIONES_A_IDX))
+    model = build_model_etapa0(num_classes=len(ETIQUETAS_A_IDX))
     model.load_state_dict(torch.load(model_path, map_location="cpu"))
     model.eval()
 
-    dummy_input = torch.randn(1, 3, 512, 512)
+    dummy_input = torch.randn(1, 1, 512, 512)  # 1 canal - ver src/dataset.py
     torch.onnx.export(
         model,
         dummy_input,

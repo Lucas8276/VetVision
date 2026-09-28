@@ -1,21 +1,35 @@
-version: 1.0.0
+version: 1.2.0
 modelo_base: densenet121
 pretrained_on: torchxrayvision_chest_xray
-arquitectura: cascada_2_etapas
+# etapa_0 es un gate independiente (torax/no-torax), no inicializa sus pesos
+# desde ninguna otra etapa. La cascada real (etapa_1 -> etapa_2, pesos
+# encadenados) sigue siendo de 2 etapas.
+arquitectura: gate_torax_mas_cascada_2_etapas
 
 input:
-  formato: RGB
+  # Corregido tras correr el entrenamiento real de etapa_0 (feature
+  # 002-etapa0-torax-clasificador): el backbone de TorchXRayVision espera 1
+  # canal (escala de grises) y rango ~[-1024, 1024] (xrv.utils.normalize), NO
+  # RGB de 3 canales ni imagenet_mean_std. El valor anterior nunca se habia
+  # probado contra el backbone real.
+  formato: GRAYSCALE
   size: [512, 512]
-  canales: 3
-  normalizacion: imagenet_mean_std
+  canales: 1
+  normalizacion: torchxrayvision_normalize   # xrv.utils.normalize(img, maxval=255, reshape=True)
 
 etapas:
+  etapa_0_torax:
+    input_shape: [1, 512, 512]
+    output_shape: [2]         # TORAX, NO_TORAX
+    activacion_salida: softmax
+    umbral_promocion_balanced_accuracy: 0.90
   etapa_1_triaje:
-    input_shape: [3, 512, 512]
+    input_shape: [1, 512, 512]   # inferido: mismo backbone/pipeline que etapa_0, sin validar
+                                  # todavia (etapa_1 no implementada, ver ground-truth-annotation.spec.yaml)
     output_shape: [2]         # SANO, NO_SANO
     activacion_salida: softmax
   etapa_2_diagnostico:
-    input_shape: [3, 512, 512]
+    input_shape: [1, 512, 512]   # inferido, mismo motivo que etapa_1
     output_shape: [4]         # ALVEOLAR, EFUSION_PLEURAL, INTERSTICIAL, OTRO
     activacion_salida: sigmoid   # multi_label
     condicion: solo_si_etapa_1_predice_NO_SANO
