@@ -2,117 +2,19 @@ import argparse
 import csv
 import os
 import shutil
-import struct
 from pathlib import Path
 
 import numpy as np
 from PIL import Image
 from pylibjpeg import decode as decode_jpeg_lossless
 
+from src.ddo_parser import generar_txt_desde_ddo
+
 # --- CONFIGURACIÓN ---
 EXTENSIONES_A_MOVER_SIEMPRE = {".dsp", ".edk", ".edr", ".std"}  # .hq se maneja aparte (se decodifica)
 EXTENSION_DDO = ".ddo"
 EXTENSION_JPG = ".jpg"
 EXTENSION_HQ = ".hq"
-
-# --- Parser de .ddo (mismo usado en ddo_to_txt.py) ---
-ITEM = (0xFFFE, 0xE000)
-ITEM_DELIM = (0xFFFE, 0xE00D)
-SEQ_DELIM = (0xFFFE, 0xE0DD)
-
-
-def parse_ddo_bytes(data: bytes):
-    n = len(data)
-    tags = {}
-
-    def read_element(i):
-        group, elem = struct.unpack_from("<HH", data, i)
-        j = i + 4
-
-        if (group, elem) == ITEM:
-            length = struct.unpack_from("<I", data, j)[0]
-            j += 4
-            if length == 0xFFFFFFFF:
-                while True:
-                    g2, e2 = struct.unpack_from("<HH", data, j)
-                    if (g2, e2) == ITEM_DELIM:
-                        l2 = struct.unpack_from("<I", data, j + 4)[0]
-                        j += 8 + l2
-                        break
-                    j, _ = read_element(j)
-                return j, None
-            else:
-                j += length
-                return j, None
-
-        if (group, elem) in (ITEM_DELIM, SEQ_DELIM):
-            length = struct.unpack_from("<I", data, j)[0]
-            j += 4 + length
-            return j, None
-
-        vr = data[j:j + 2].decode("ascii", errors="replace")
-        j += 2
-        length = struct.unpack_from("<I", data, j)[0]
-        j += 4
-
-        if length == 0xFFFFFFFF:
-            while True:
-                g2, e2 = struct.unpack_from("<HH", data, j)
-                if (g2, e2) == SEQ_DELIM:
-                    l2 = struct.unpack_from("<I", data, j + 4)[0]
-                    j += 8 + l2
-                    break
-                j, _ = read_element(j)
-            return j, ((group, elem), vr, None)
-        else:
-            value = data[j:j + length]
-            j += length
-            return j, ((group, elem), vr, value)
-
-    i = 0
-    while i + 8 <= n:
-        i, result = read_element(i)
-        if result:
-            tag, vr, value = result
-            tags[tag] = (vr, value)
-    return tags
-
-
-def _get_tag(tags, group, elem, default=""):
-    v = tags.get((group, elem))
-    if not v or v[1] is None:
-        return default
-    _, raw = v
-    try:
-        return raw.decode("ascii", errors="replace").strip("\x00 ").strip()
-    except Exception:
-        return default
-
-
-def _fecha_dicom_a_puntos(fecha: str) -> str:
-    if len(fecha) == 8 and fecha.isdigit():
-        return f"{fecha[6:8]}.{fecha[4:6]}.{fecha[0:4]}"
-    return fecha
-
-
-def generar_txt_desde_ddo(path_ddo: Path, destino_txt: Path):
-    """Lee un .ddo y escribe el .txt de metadata (mismo formato que las exportaciones oficiales)."""
-    with open(path_ddo, "rb") as f:
-        data = f.read()
-    tags = parse_ddo_bytes(data)
-
-    contenido = (
-        f"ID del paciente:{_get_tag(tags, 0x0010, 0x0020)}\n"
-        f"Nombre del paciente:{_get_tag(tags, 0x0010, 0x0010).replace('^', ' ')}\n"
-        f"Sexo:{_get_tag(tags, 0x0010, 0x0040)}\n"
-        f"Fecha de exposición:{_fecha_dicom_a_puntos(_get_tag(tags, 0x0008, 0x0022))}\n"
-        f"Región anatómica:{_get_tag(tags, 0x0018, 0x0015)}\n"
-        f"Nombre del menú de exposición:{_get_tag(tags, 0x0018, 0x1400)}\n"
-        f"Modalidad:{_get_tag(tags, 0x0008, 0x0060)}\n"
-        f"Institución:{_get_tag(tags, 0x0008, 0x0080)}\n"
-    )
-    with open(destino_txt, "w", encoding="utf-8") as f:
-        f.write(contenido)
 
 UMBRAL_JPG_GRANDE = 6 * 1024   # bytes (> 6 KB = conservar)
 UMBRAL_JPG_CHICO = 5 * 1024    # bytes (<= 5 KB con 's' = sobrante)
