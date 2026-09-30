@@ -18,7 +18,7 @@ def _elemento(group, elem, vr, value: bytes) -> bytes:
 def _ddo_sintetico() -> bytes:
     return (
         _elemento(0x0010, 0x0020, "LO", b"12345")
-        + _elemento(0x0010, 0x0010, "PN", b"REYES^ROMINA")
+        + _elemento(0x0010, 0x0010, "PN", b"PACIENTE^PRUEBA")
         + _elemento(0x0010, 0x0040, "CS", b"O")
         + _elemento(0x0008, 0x0022, "DA", b"20180411")
         + _elemento(0x0018, 0x0015, "CS", b"TORAX")
@@ -32,7 +32,7 @@ def test_parse_ddo_bytes_extrae_campos_basicos():
     tags = parse_ddo_bytes(_ddo_sintetico())
 
     assert get_tag(tags, 0x0010, 0x0020) == "12345"
-    assert get_tag(tags, 0x0010, 0x0010) == "REYES^ROMINA"
+    assert get_tag(tags, 0x0010, 0x0010) == "PACIENTE^PRUEBA"
     assert get_tag(tags, 0x0010, 0x0040) == "O"
     assert get_tag(tags, 0x0008, 0x0022) == "20180411"
     assert get_tag(tags, 0x0018, 0x0015) == "TORAX"
@@ -94,7 +94,7 @@ def test_generar_txt_desde_ddo_escribe_las_8_lineas(tmp_path):
     contenido = txt_path.read_text(encoding="utf-8")
 
     assert "ID del paciente:12345" in contenido
-    assert "Nombre del paciente:REYES ROMINA" in contenido
+    assert "Nombre del paciente:PACIENTE PRUEBA" in contenido
     assert "Sexo:O" in contenido
     assert "Fecha de exposición:11.04.2018" in contenido
     assert "Región anatómica:TORAX" in contenido

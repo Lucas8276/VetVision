@@ -40,8 +40,8 @@ Explicit VR Little Endian, pero **no es DICOM estándar**:
 | (0008,0022) | Fecha de adquisición (YYYYMMDD) | `20180411` |
 | (0008,0060) | Modalidad | `CR` |
 | (0008,0080) | Institución | `HOSPITAL DE CLINICAS - F.C.V.` |
-| (0010,0010) | Nombre paciente (formato `APELLIDO^NOMBRE`) | `REYES^ROMINA` |
-| (0010,0020) | ID paciente | `9867-1` |
+| (0010,0010) | Nombre paciente (formato `APELLIDO^NOMBRE`) | `PACIENTE^PRUEBA` |
+| (0010,0020) | ID paciente | `0000-1` |
 | (0010,0040) | Sexo | `O` |
 | (0018,0015) | Región anatómica | `CHEST` |
 | (0018,1400) | Descripción del menú de exposición (especie+vista+zona) | `TORAX VD/DV CANINO` |

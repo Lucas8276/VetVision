@@ -90,7 +90,7 @@ guion) y verificar que ninguno cae en un valor "desconocido" que debería estar 
 3. **Given** un menú de exposición sin ningún token de vista (`"ESOFAGO CANINO"`), **When** se
    parsea, **Then** el sistema devuelve explícitamente "vista ausente" sin lanzar error ni asumir
    un valor incorrecto.
-4. **Given** un ID de paciente con guion (`"336-7"`, `"9795-3"`), **When** se parsea, **Then** el
+4. **Given** un ID de paciente con guion (`"123-4"`, `"456-7"`), **When** se parsea, **Then** el
    valor se conserva completo, sin truncar ni rechazar el registro.
 
 ---

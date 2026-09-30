@@ -39,7 +39,7 @@ encode the actual observed value set. Known real-world mismatches already discov
 MUST be treated as required spec inputs, not left as silent fallbacks: anatomical region
 codes arrive in English/equipment codes (`CHEST`, `NECK`, `HEAD`, `UP_EXM`, `LOW_EXM`),
 not the Spanish set currently validated in `src/parser_fcr.py`; the "vista" field can be a
-combined token (`VD/DV`) or absent; patient IDs can contain a dash (`336-7`).
+combined token (`VD/DV`) or absent; patient IDs can contain a dash (`123-4`).
 **Rationale**: the current `REGIONES_VALIDAS`/`VISTAS_VALIDAS` sets were written from
 assumption and silently misclassify most real records as `"DESCONOCIDA"` — a defect
 found only by sampling `C:\Users\Usuario\Music\DatasetVetVision` directly, not by reading

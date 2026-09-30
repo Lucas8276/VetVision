@@ -26,7 +26,7 @@ los definitivos):
   confirma que ninguno cae en `"DESCONOCIDA"` (FR-005, SC-003),
 - un test con `"CRANEO VD/DV FELINO"` que confirma que `vista == "VD/DV"` (FR-006),
 - un test con `"ESOFAGO CANINO"` que confirma `vista is None` sin excepción (FR-007),
-- un test con `ID del paciente:336-7` que confirma que el ID se preserva completo (FR-008).
+- un test con `ID del paciente:123-4` que confirma que el ID se preserva completo (FR-008).
 
 Todos los fixtures usados son sintéticos (Decisión 6 de `research.md`) — ningún test debe leer un
 archivo de `C:\Users\Usuario\Music\DatasetVetVision`.

@@ -105,7 +105,7 @@ cada caso (tags DICOM-like armados con `struct.pack`, o texto plano para el caso
 `C:\Users\Usuario\Music\DatasetVetVision`.
 
 **Rationale**: Principio IV (Patient Data Protection) — los `.txt` reales que vimos contienen
-nombres de pacientes reales (ej. "BARRIOS LINO DANIEL"). Copiar un archivo real a `tests/fixtures/`
+nombres de pacientes reales (nombres y apellidos de personas). Copiar un archivo real a `tests/fixtures/`
 y commitearlo subiría datos de paciente identificables a git, violando la constitution
 directamente.
 
