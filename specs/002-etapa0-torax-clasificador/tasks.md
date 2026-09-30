@@ -95,14 +95,12 @@ esconda un mal resultado.
   `sklearn.metrics`, subir `UMBRAL_PROMOCION_ACC` de 0.85 a 0.90, y calcular `promovible` contra
   `balanced_accuracy` en vez de `accuracy`; además, usar los índices de validación persistidos
   (si existen) en vez de evaluar sobre el dataset completo — depende de T007
-- [ ] T011 [US2] Ejecutar `quickstart.md` pasos 2-3 (entrenar + evaluar) sobre `data/processed`
-  real y confirmar: (a) el run de MLflow no contiene nombre/ID de paciente, (b) se reportan
-  `accuracy`, `balanced_accuracy`, `f1_macro`, `promovible` — depende de T009, T010; **requiere
-  `data/processed` poblado con el dataset real, no se puede correr en modo simulación**.
-  **Progreso parcial**: Corrida 1 (3 épocas, ver `ENTRENAMIENTOS.md`) validó el pipeline
-  completo end-to-end y dio `val_acc=81.22%` (accuracy simple, sin semilla fija todavía) — no
-  cuenta como T011 completa porque no se midió `balanced_accuracy`/F1 sobre un held-out
-  reconstruible. Pendiente: corrida completa (15 épocas) con el fix de semilla ya aplicado.
+- [X] T011 [US2] Ejecutar `quickstart.md` pasos 2-3 (entrenar + evaluar) sobre `data/processed`
+  real — **Corrida 2 completa (ver `ENTRENAMIENTOS.md`)**: 15 épocas, `accuracy=84.90%`,
+  `balanced_accuracy=85.17%`, `f1_macro=84.90%`, `promovible=False` (umbral 90%). MLflow no
+  contiene nombre/ID de paciente (solo conteos y métricas, Principio IV). **No alcanzó el
+  umbral de SC-002** — `val_acc` se estanca desde la época ~4-5, señal de que el backbone
+  congelado llegó a su techo de capacidad, no de que falten épocas.
 
 **Checkpoint**: US2 funcional e independiente de US1 en términos de código (depende de sus datos).
 
@@ -120,9 +118,10 @@ esconda un mal resultado.
   cambios de firma con `num_classes=2` — depende de T007. **Encontrado y corregido**: a
   diferencia de lo asumido en `plan.md`, `export_onnx.py` sí necesitaba un cambio (importaba
   `REGIONES_A_IDX`, que ya no existe) y su `dummy_input` tenía 3 canales en vez de 1
-- [ ] T013 [US3] Ejecutar `quickstart.md` paso 4 sobre un estudio real no usado en
+- [X] T013 [US3] Ejecutar `quickstart.md` paso 4 sobre un estudio real no usado en
   entrenamiento/evaluación y confirmar que devuelve `TORAX`/`NO_TORAX` explícito, no un tensor
-  crudo (FR-007) — depende de T011 (modelo ya entrenado)
+  crudo (FR-007) — depende de T011 (modelo ya entrenado). **Confirmado**: `FCR4957.jpg`
+  (del held-out) → predicción `NO_TORAX`, coincide con la etiqueta real.
 
 **Checkpoint**: las 3 historias son funcionales de forma independiente.
 

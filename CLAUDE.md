@@ -77,9 +77,18 @@ if that happens). Not needed once the weights are cached.
   `specs/ground-truth-annotation.spec.yaml`). Etapa 2 is meant to initialize from
   Etapa 1's fine-tuned weights, not train independently, once it exists.
 - `src/model.py` backbone is DenseNet-121 pretrained on human chest X-ray
-  (TorchXRayVision), with the backbone frozen by default (`freeze_backbone=True`).
-  `build_model_etapa0(num_classes)` is generic — Etapa 0's redefinition from 6
-  classes to 2 (`ETIQUETAS_A_IDX`) required no change to `model.py` itself.
+  (TorchXRayVision), frozen by default (`freeze_backbone=True`). Partial
+  fine-tuning is supported via `--unfreeze-layers` (`src/train.py` CLI, e.g.
+  `denseblock4,norm5` — matches `self.features`' named children) with a
+  separate, lower learning rate for the unfrozen backbone params
+  (`--backbone-lr-factor`, default 0.1x the head's LR) so pretrained weights
+  aren't destroyed in a few steps. `build_model_etapa0(num_classes)` is
+  generic — Etapa 0's redefinition from 6 classes to 2 (`ETIQUETAS_A_IDX`)
+  required no change to `model.py` itself.
+- `src/train.py` saves the **best** epoch's checkpoint (by `val_balanced_acc`,
+  computed every epoch), not the last one — training can keep improving past
+  the point where it starts to overfit, and without this the final save would
+  silently be worse than an earlier epoch.
 - Promotion threshold (`src/evaluate.py::UMBRAL_PROMOCION_ACC`) is 0.90, checked
   against `balanced_accuracy`, not plain `accuracy` — a binary TORAX/NO_TORAX
   split isn't guaranteed 50/50, and plain accuracy can hide poor performance on
