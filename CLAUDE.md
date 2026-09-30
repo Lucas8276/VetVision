@@ -145,3 +145,16 @@ Resolved by `specs/001-fcr-metadata-extraction/` (region code mapping, combined
 - DVC remote credentials belong in `.dvc/config.local` (gitignored) or env vars,
   set via `dvc remote modify --local ...` — never in `.dvc/config`, which is
   committed and shared with the team.
+
+## Git: dos confirmaciones y datos personales
+
+- **Antes de cualquier `git commit`**: mostrar la lista exacta de archivos (`git status --short`
+  y `git diff --cached --stat`) y esperar una aprobación explícita.
+- **Antes de cualquier `git push`**: pedir una segunda aprobación, distinta, mostrando los commits
+  que salen (`git log origin/<rama>..HEAD`), el remoto y si el repo es público o privado. Aprobar
+  el commit NO aprueba el push.
+- Lo hace cumplir el entorno (`permissions.ask` en `.claude/settings.json`, ver
+  `specs/003-harness-verificacion-automatica/`, FR-019/FR-020), no solo esta regla.
+- El repositorio es **público**. Nunca escribir nombres, apellidos ni IDs reales de pacientes o
+  dueños en código, tests, docs, specs ni mensajes de commit; usar valores ficticios obvios
+  (ej. `PACIENTE^PRUEBA`, `0000-1`). En el historial ya hubo una filtración real (ver el spec 003).

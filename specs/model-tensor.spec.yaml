@@ -36,4 +36,4 @@ etapas:
 
 export:
   formato: onnx
-  opset: 17
+  opset: 18   # PyTorch 2.14 no logra bajar la conversion a 17 de forma confiable; 18 verificado con onnxruntime
