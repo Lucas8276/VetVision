@@ -17,3 +17,4 @@ onnxscript>=0.7
 pytest>=8.0
 flask>=3.0
 flask-cors>=4.0
+pyyaml>=6.0

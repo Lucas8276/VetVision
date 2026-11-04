@@ -1,0 +1,13 @@
+# Valores FICTICIOS aprobados para la guardia. Un valor por linea, '#' comenta.
+# Solo valores evidentemente inventados. NUNCA agregar un dato real.
+PACIENTE^PRUEBA
+PACIENTE PRUEBA
+0000-1
+123-4
+456-7
+999-1
+999
+12345
+1
+MARCADOR^OK
+APELLIDO^NOMBRE

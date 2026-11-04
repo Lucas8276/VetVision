@@ -17,4 +17,6 @@ venv/
 models/
 .ipynb_checkpoints/
 NOTAS-SPECKIT.md
-.claude/
+.claude/*
+!.claude/skills/
+!.claude/settings.json

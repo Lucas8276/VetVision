@@ -26,11 +26,11 @@ spec; se ordenan US1 → US3 → US2 porque US2 (CI y comando único) agrega lo 
 
 ## Phase 1: Setup
 
-- [ ] T001 Crear el paquete `harness/` con `__init__.py` y los módulos vacíos `contratos.py`,
+- [X] T001 Crear el paquete `harness/` con `__init__.py` y los módulos vacíos `contratos.py`,
   `guardia.py`, `hooks.py`, `lanzar.py` y `__main__.py`, según la estructura de `plan.md`
-- [ ] T002 [P] Agregar `pyyaml>=6.0` a `requirements.txt` (hoy llega solo como dependencia
+- [X] T002 [P] Agregar `pyyaml>=6.0` a `requirements.txt` (hoy llega solo como dependencia
   transitiva; el validador la usa directamente — research D12)
-- [ ] T003 [P] Crear `pytest.ini` en la raíz registrando el marcador `contratos` (el test que
+- [X] T003 [P] Crear `pytest.ini` en la raíz registrando el marcador `contratos` (el test que
   valida el repo real contra los contratos; `python -m harness todo` lo excluye para no correrlo dos
   veces — research D4)
 
@@ -41,17 +41,17 @@ spec; se ordenan US1 → US3 → US2 porque US2 (CI y comando único) agrega lo 
 **Purpose**: la unidad común de resultado y el esqueleto del comando. Todas las verificaciones
 informan con la misma estructura (`data-model.md`, entidad Resultado).
 
-- [ ] T004 [P] Test de `Resultado` en `tests/test_harness_nucleo.py`: `estado` solo admite
+- [X] T004 [P] Test de `Resultado` en `tests/test_harness_nucleo.py`: `estado` solo admite
   `ok | falla | pendiente | sin_verificacion`; `formatear()` produce `ESTADO  verificacion
   ubicacion  [regla]  mensaje`; `resumen()` cuenta los cuatro estados; solo `falla` produce código
   de salida 1 (contracts §1)
-- [ ] T005 Implementar en `harness/__init__.py` el dataclass `Resultado` (campos: `verificacion`,
+- [X] T005 Implementar en `harness/__init__.py` el dataclass `Resultado` (campos: `verificacion`,
   `estado`, `ubicacion`, `regla`, `esperado`, `obtenido`, `mensaje`), `formatear()`, `resumen()` y
   `codigo_de_salida()` — depende de T004 en rojo
-- [ ] T006 [P] Test del despacho de `python -m harness` en `tests/test_harness_nucleo.py`:
+- [X] T006 [P] Test del despacho de `python -m harness` en `tests/test_harness_nucleo.py`:
   subcomandos `contratos | guardia | todo` (default `todo`); una excepción interna del harness
   devuelve código 2 y **nunca** 0; subcomando desconocido → 2
-- [ ] T007 Implementar el esqueleto de `harness/__main__.py`: parseo de subcomando y de las
+- [X] T007 Implementar el esqueleto de `harness/__main__.py`: parseo de subcomando y de las
   opciones `--preparados`, `--archivos`, `--rapido`; captura de excepciones internas → código 2 —
   depende de T005, T006
 
@@ -69,26 +69,26 @@ revertir y ver que pasa (quickstart §2).
 
 ### Spec primero (corregir los desvíos que ya existen, antes de activar el validador — research D3)
 
-- [ ] T008 [US1] En `specs/data-contract.spec.yaml`, `proyecciones_admitidas` pasa de
+- [X] T008 [US1] En `specs/data-contract.spec.yaml`, `proyecciones_admitidas` pasa de
   `[LAT, VD, DV]` a `[LAT, VD, DV, AP, VD/DV]`, con un comentario que explique que `VD/DV` sale de
   los menús reales del equipo (feature 001) y que `AP` ya figuraba en el comentario del campo `vista`
-- [ ] T009 [P] [US1] En `specs/model-tensor.spec.yaml`, agregar `estado: pendiente` a
+- [X] T009 [P] [US1] En `specs/model-tensor.spec.yaml`, agregar `estado: pendiente` a
   `etapa_1_triaje` y `etapa_2_diagnostico` (las dos bloqueadas por la anotación clínica)
-- [ ] T010 [P] [US1] En `specs/ground-truth-annotation.spec.yaml`, agregar `estado: pendiente` a
+- [X] T010 [P] [US1] En `specs/ground-truth-annotation.spec.yaml`, agregar `estado: pendiente` a
   `etapa_1_triaje` y `etapa_2_diagnostico`
-- [ ] T011 [US1] En `src/export_onnx.py`, cambiar el valor por defecto del parámetro `opset` de 17 a
+- [X] T011 [US1] En `src/export_onnx.py`, cambiar el valor por defecto del parámetro `opset` de 17 a
   18, para que el código coincida con el spec (el spec manda; el archivo realmente exportado ya es
   opset 18)
 
 ### Tests de User Story 1 (escribir y confirmar que fallan antes de implementar)
 
-- [ ] T012 [P] [US1] En `tests/test_harness_contratos.py`, test marcado `@pytest.mark.contratos`:
+- [X] T012 [P] [US1] En `tests/test_harness_contratos.py`, test marcado `@pytest.mark.contratos`:
   validar el repo real (specs reales + código real) no produce ningún `falla`
-- [ ] T013 [P] [US1] En `tests/test_harness_contratos.py`, tests de deriva reintroducida sobre una
+- [X] T013 [P] [US1] En `tests/test_harness_contratos.py`, tests de deriva reintroducida sobre una
   copia del diccionario del spec (sin tocar los archivos): `input.canales` = 3, `export.opset` = 17 y
   quitar `VD/DV` de `proyecciones_admitidas`; cada uno produce un `falla` cuyo `esperado` y
   `obtenido` son los valores correctos y cuya `ubicacion` nombra el campo (SC-001)
-- [ ] T014 [P] [US1] En `tests/test_harness_contratos.py`, tests de cobertura: las secciones con
+- [X] T014 [P] [US1] En `tests/test_harness_contratos.py`, tests de cobertura: las secciones con
   `estado: pendiente` se informan `pendiente` (una línea por sección) y los campos sin verificador
   (`resolucion_minima_px`, `formato_archivos_por_paciente.*`, `anonimizacion.*`, `fuente`,
   `requiere_anotacion_manual`) se informan `sin_verificacion` — ni pasan en silencio ni fallan (FR-003,
@@ -96,20 +96,20 @@ revertir y ver que pasa (quickstart §2).
 
 ### Implementación de User Story 1
 
-- [ ] T015 [US1] En `harness/contratos.py`: cargar los tres contratos con PyYAML y recorrer sus
+- [X] T015 [US1] En `harness/contratos.py`: cargar los tres contratos con PyYAML y recorrer sus
   hojas generando la ruta del campo (`model-tensor › etapas › etapa_0_torax › output_shape`);
   respetar `estado: pendiente` a nivel de sección — depende de T007, T009, T010, T012–T014 en rojo
-- [ ] T016 [US1] En `harness/contratos.py`: registro de verificadores según la tabla de research D2
+- [X] T016 [US1] En `harness/contratos.py`: registro de verificadores según la tabla de research D2
   (canales = `features.conv0.in_channels`; salida = `classifier.out_features` y `ETIQUETAS_A_IDX`;
   umbral = `UMBRAL_PROMOCION_ACC`; `export` = valor por defecto de `exportar_onnx`; vistas y especies =
   `VISTAS_VALIDAS` / `ESPECIES_VALIDAS`; tamaño de entrada = forma que devuelve
   `VetVisionEtapa0Dataset.__getitem__` sobre una imagen sintética generada en un directorio temporal).
   El modelo se construye una sola vez por corrida con `DenseNetEtapa0(num_classes=2, weights=None)`
   (sin descargar pesos — research D3b)
-- [ ] T017 [US1] En `harness/contratos.py`: `validar_contratos(specs=None)` devuelve la lista de
+- [X] T017 [US1] En `harness/contratos.py`: `validar_contratos(specs=None)` devuelve la lista de
   `Resultado` (acepta los specs como argumento para los tests de deriva) y se conecta a
   `python -m harness contratos`, que imprime una línea por campo más el resumen
-- [ ] T018 [US1] Correr `pytest tests/test_harness_contratos.py` y `python -m harness contratos`:
+- [X] T018 [US1] Correr `pytest tests/test_harness_contratos.py` y `python -m harness contratos`:
   ambos en verde con el repo real. Si aparece una divergencia nueva, se corrige empezando por el
   spec, no por el validador
 
@@ -127,43 +127,43 @@ el reporte no repite el valor.
 
 ### Tests de User Story 3 (escribir y confirmar que fallan antes de implementar)
 
-- [ ] T019 [US3] Crear `harness/valores_ficticios.txt` con los valores ficticios aprobados de
+- [X] T019 [US3] Crear `harness/valores_ficticios.txt` con los valores ficticios aprobados de
   `data-model.md` (`PACIENTE^PRUEBA`, `PACIENTE PRUEBA`, `0000-1`, `123-4`, `456-7`, `999-1`, `999`,
   `12345`, `1`), un valor por línea, `#` para comentarios. Solo valores evidentemente inventados
-- [ ] T020 [P] [US3] En `tests/test_harness_guardia.py`, tests de las reglas de texto, con muestras
+- [X] T020 [P] [US3] En `tests/test_harness_guardia.py`, tests de las reglas de texto, con muestras
   armadas por concatenación en tiempo de ejecución: `R-CAMPO-PACIENTE` marca un valor no aprobado y
   deja pasar uno aprobado y un marcador de plantilla `{...}`; `R-NOMBRE-DICOM` (`APELLIDO^NOMBRE`);
   `R-ID-PACIENTE` (campo `ID del paciente:` e ID suelto `NNN(N)-N`); y NO se marcan fechas
   (`2026-09-30`), versiones, ni identificadores como `FR-018` o `SC-002`
-- [ ] T021 [P] [US3] En `tests/test_harness_guardia.py`, tests de archivos y secretos:
+- [X] T021 [P] [US3] En `tests/test_harness_guardia.py`, tests de archivos y secretos:
   `R-ARCHIVO-CRUDO` bloquea las extensiones `.ddo .hq .dsp .std .edk .edr`, archivos `FCR<n>.*`,
   rutas `data/raw/` y `data/processed/`, `*.db`, `*.pt`, `*.onnx`; `R-SECRETO` bloquea claves de
   nube, tokens de GitHub y bloques de clave privada (muestras armadas en ejecución)
-- [ ] T022 [P] [US3] En `tests/test_harness_guardia.py`, tests de salida y modos: **el reporte
+- [X] T022 [P] [US3] En `tests/test_harness_guardia.py`, tests de salida y modos: **el reporte
   nunca contiene el valor detectado** (se afirma que la muestra no aparece en stdout ni stderr);
   `--archivos` sobre archivos puntuales; `--preparados` sobre un repositorio git temporal
   (`git init` en `tmp_path`) revisa solo lo agregado al índice; códigos de salida 0/1/2
-- [ ] T023 [P] [US3] En `tests/test_harness_guardia.py`, test de integración: la guardia sobre los
+- [X] T023 [P] [US3] En `tests/test_harness_guardia.py`, test de integración: la guardia sobre los
   archivos rastreados del repo real (`git ls-files`) no produce hallazgos, incluyendo los propios
   archivos de la guardia y sus tests (FR-011, FR-012)
 
 ### Implementación de User Story 3
 
-- [ ] T024 [US3] En `harness/guardia.py`: tabla de reglas (`id`, `alcance`, `patron`, `aprobable`)
+- [X] T024 [US3] En `harness/guardia.py`: tabla de reglas (`id`, `alcance`, `patron`, `aprobable`)
   con `R-CAMPO-PACIENTE`, `R-NOMBRE-DICOM` y `R-ID-PACIENTE` según research D5 (lookaround para no
   confundir fechas ni versiones); carga de `valores_ficticios.txt` (sin distinguir mayúsculas, sin
   espacios sobrantes) — depende de T019 y de T020–T023 en rojo
-- [ ] T025 [US3] En `harness/guardia.py`: reglas `R-ARCHIVO-CRUDO` (por ruta y extensión) y
+- [X] T025 [US3] En `harness/guardia.py`: reglas `R-ARCHIVO-CRUDO` (por ruta y extensión) y
   `R-SECRETO` (patrones de claves/tokens/bloques privados; ninguna dependencia externa — research D5)
-- [ ] T026 [US3] En `harness/guardia.py`: modos de entrada — árbol completo (`git ls-files`),
+- [X] T026 [US3] En `harness/guardia.py`: modos de entrada — árbol completo (`git ls-files`),
   `--preparados` (nombres con `git diff --cached --name-only --diff-filter=ACMR` y solo las líneas
   agregadas con `git diff --cached -U0`) y `--archivos`; convertir cada `Hallazgo` en `Resultado`
   con `ubicacion` `archivo:línea`, `regla` y `mensaje` **sin el valor**; conectar a
   `python -m harness guardia` (solo biblioteca estándar)
-- [ ] T027 [US3] Correr la guardia sobre el repo y triar cada hallazgo: si es un dato real, se
+- [X] T027 [US3] Correr la guardia sobre el repo y triar cada hallazgo: si es un dato real, se
   corrige el archivo; si es un valor evidentemente ficticio, se agrega a `valores_ficticios.txt` con
   un comentario de justificación. Nunca se agrega un valor real a la lista
-- [ ] T028 [US3] Correr `pytest tests/test_harness_guardia.py`: todo en verde
+- [X] T028 [US3] Correr `pytest tests/test_harness_guardia.py`: todo en verde
 
 **Checkpoint**: US3 funcional e independiente (FR-008 a FR-012, FR-018).
 
@@ -179,7 +179,7 @@ correr el comando local y obtener el mismo resultado.
 
 ### Tests de User Story 2 (escribir y confirmar que fallan antes de implementar)
 
-- [ ] T029 [P] [US2] En `tests/test_harness_config.py`, tests de la configuración de CI:
+- [X] T029 [P] [US2] En `tests/test_harness_config.py`, tests de la configuración de CI:
   existe `.github/workflows/verificar.yml`; dispara en `push` y `pull_request`; declara
   `permissions: contents: read` y nada más; ejecuta `python -m harness`; instala PyTorch desde el
   índice CPU; existe `requirements-ci.txt` y no lista `dvc`, `mlflow` ni `flask` (contracts §5)
@@ -190,19 +190,19 @@ correr el comando local y obtener el mismo resultado.
 
 ### Implementación de User Story 2
 
-- [ ] T031 [US2] En `harness/__main__.py`: implementar `todo` — correr contratos, guardia sobre el
+- [X] T031 [US2] En `harness/__main__.py`: implementar `todo` — correr contratos, guardia sobre el
   árbol y `sys.executable -m pytest -q -m "not contratos"`, unificar el reporte, imprimir el resumen
   con los conteos y devolver el código de salida (contracts §1) — depende de T017, T026, T030
-- [ ] T032 [US2] En `harness/__main__.py`: modo `--rapido` y aviso de `core.hooksPath` sin activar
+- [X] T032 [US2] En `harness/__main__.py`: modo `--rapido` y aviso de `core.hooksPath` sin activar
   (research D6, riesgo asumido)
-- [ ] T033 [P] [US2] Crear `requirements-ci.txt` con el conjunto mínimo de research D12 (`torch` se
+- [X] T033 [P] [US2] Crear `requirements-ci.txt` con el conjunto mínimo de research D12 (`torch` se
   instala aparte desde el índice CPU): `torchvision`, `torchxrayvision`, `opencv-python-headless`,
   `numpy`, `Pillow`, `pylibjpeg`, `pylibjpeg-libjpeg`, `scikit-learn`, `pyyaml`, `pytest`
-- [ ] T034 [US2] Crear `.github/workflows/verificar.yml` según contracts §5: disparadores `push` y
+- [X] T034 [US2] Crear `.github/workflows/verificar.yml` según contracts §5: disparadores `push` y
   `pull_request`, `ubuntu-latest`, `actions/checkout` y `actions/setup-python` (Python 3.13) fijados
   a su versión mayor, instalación de PyTorch CPU + `requirements-ci.txt`, paso `python -m harness`,
   `permissions: contents: read`, sin secretos
-- [ ] T035 [US2] Correr `python -m harness` en local, medir el tiempo total y confirmar código 0;
+- [X] T035 [US2] Correr `python -m harness` en local, medir el tiempo total y confirmar código 0;
   anotar el tiempo para validar contra el presupuesto de 10 min de CI (SC-002)
 - [ ] T036 [US2] Primera corrida de CI (**requiere aprobación del usuario: es un push**, con las
   dos confirmaciones): subir una rama de prueba con un test roto a propósito, confirmar rojo con el
@@ -225,13 +225,13 @@ de commit/push más los hooks), y que los commits hechos a mano también pasen p
 
 ### Tests de User Story 4 (escribir y confirmar que fallan antes de implementar)
 
-- [ ] T038 [P] [US4] En `tests/test_harness_config.py`, tests de `.claude/settings.json`: existen
+- [X] T038 [P] [US4] En `tests/test_harness_config.py`, tests de `.claude/settings.json`: existen
   las 8 reglas `ask` (commit y push × Bash y PowerShell, incluida la variante con opciones
   intermedias `git * commit *`); ninguna regla cubre commit y push a la vez (FR-019/FR-020); están
   declarados el hook `PreToolUse` de `git commit` y el `PostToolUse` de ediciones en `src/`,
   `specs/` y `tests/`; y, con `git check-ignore`, `.claude/settings.local.json` **está** ignorado
   mientras `.claude/skills/` y `.claude/settings.json` **no**
-- [ ] T039 [P] [US4] En `tests/test_harness_hooks.py`, tests de `harness/hooks.py` con JSON
+- [X] T039 [P] [US4] En `tests/test_harness_hooks.py`, tests de `harness/hooks.py` con JSON
   sintético por stdin: `pre-commit` con un comando `git commit` y un archivo preparado con una
   muestra no aprobada en un repo git temporal → código 2 y stderr con la regla pero sin el valor;
   con lo preparado limpio → 0; comando que no es un commit → 0; `post-edit` sobre una ruta de
@@ -243,21 +243,21 @@ de commit/push más los hooks), y que los commits hechos a mano también pasen p
 
 ### Implementación de User Story 4
 
-- [ ] T041 [US4] Implementar `harness/lanzar.py`: lanzador solo biblioteca estándar que ubica el
+- [X] T041 [US4] Implementar `harness/lanzar.py`: lanzador solo biblioteca estándar que ubica el
   Python del venv y delega en él (research D8) — depende de T040 en rojo
-- [ ] T042 [US4] Implementar `harness/hooks.py`: subcomandos `pre-commit` y `post-edit` que leen el
+- [X] T042 [US4] Implementar `harness/hooks.py`: subcomandos `pre-commit` y `post-edit` que leen el
   JSON del hook por stdin; `pre-commit` corre la guardia sobre lo preparado y devuelve 2 con el
   motivo; `post-edit` corre las verificaciones aplicables a la ruta editada — depende de T026, T039
 - [ ] T043 [P] [US4] Crear `.githooks/pre-commit` (`harness/lanzar.py guardia --preparados`) y
   `.githooks/pre-push` (`harness/lanzar.py todo`) y marcarlos ejecutables en el índice de git
-- [ ] T044 [P] [US4] Crear `scripts/instalar_hooks.py`: `git config --local core.hooksPath
+- [X] T044 [P] [US4] Crear `scripts/instalar_hooks.py`: `git config --local core.hooksPath
   .githooks`, acción explícita e idempotente, que informa lo que hizo
-- [ ] T045 [US4] Ampliar `.claude/settings.json` **sin reemplazar** las reglas `ask` existentes:
+- [X] T045 [US4] Ampliar `.claude/settings.json` **sin reemplazar** las reglas `ask` existentes:
   hook `PreToolUse` sobre `git commit` (`python harness/lanzar.py hook pre-commit`) y `PostToolUse`
   sobre ediciones de `src/**`, `specs/**`, `tests/**` (`python harness/lanzar.py hook post-edit`,
   en segundo plano). Seguir el flujo del skill `update-config`: probar el comando crudo con una
   prueba de tubería, escribir, validar el JSON, y dejar sin silenciar los errores
-- [ ] T046 [US4] Actualizar `.gitignore`: reemplazar `.claude/` por `.claude/*` con las excepciones
+- [X] T046 [US4] Actualizar `.gitignore`: reemplazar `.claude/` por `.claude/*` con las excepciones
   `!.claude/skills/` y `!.claude/settings.json`; repetir la búsqueda de secretos sobre lo que pasa a
   versionarse y confirmar con `git check-ignore` y `git status` (research D9)
 - [ ] T047 [US4] Comprobar que los hooks realmente se disparan dentro de la sesión (un centinela

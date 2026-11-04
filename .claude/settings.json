@@ -1,0 +1,32 @@
+{
+  "permissions": {
+    "ask": [
+      "Bash(git commit *)",
+      "Bash(git * commit *)",
+      "PowerShell(git commit *)",
+      "PowerShell(git * commit *)",
+      "Bash(git push *)",
+      "Bash(git * push *)",
+      "PowerShell(git push *)",
+      "PowerShell(git * push *)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash|PowerShell",
+        "hooks": [
+          { "type": "command", "command": "python harness/lanzar.py hook pre-commit" }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          { "type": "command", "command": "python harness/lanzar.py hook post-edit" }
+        ]
+      }
+    ]
+  }
+}

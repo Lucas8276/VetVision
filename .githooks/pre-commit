@@ -1,0 +1,2 @@
+#!/bin/sh
+exec python harness/lanzar.py guardia --preparados

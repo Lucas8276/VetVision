@@ -26,12 +26,19 @@ python -m src.evaluate --data-dir data/processed --model-path models/etapa0_regi
 python -m src.export_onnx --model-path models/etapa0_region.pt
 mlflow ui                                       # view training runs at localhost:5000
 
+# Harness de verificacion (spec 003): contratos + guardia de datos personales + tests
+python -m harness                 # todo; codigo 0 ok, 1 falla, 2 error interno del harness
+python -m harness contratos       # specs/*.spec.yaml vs codigo real
+python -m harness guardia --preparados   # solo lo preparado para commit
+python scripts/instalar_hooks.py  # una vez por clon: activa .githooks (pre-commit / pre-push)
+
 # Raw dataset extraction/classification (run dry-run first, always)
 python limpiar_datos_fcr.py <ruta_raiz>                       # simulation only, writes reporte_fcr.csv
 python limpiar_datos_fcr.py <ruta_raiz> --confirmar           # actually copies/moves/decodes files
 ```
 
-No lint/format tooling is configured yet.
+No lint/format tooling is configured yet. CI (`.github/workflows/verificar.yml`) corre `python -m harness`
+en cada push/PR; los hooks de Claude (`.claude/settings.json`) corren la guardia antes de `git commit`.
 
 On Windows, the first run that downloads TorchXRayVision's pretrained weights
 needs `PYTHONIOENCODING=utf-8` set (the library's progress bar prints a
