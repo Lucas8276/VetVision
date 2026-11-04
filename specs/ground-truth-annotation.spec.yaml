@@ -9,11 +9,13 @@ etapa_0_torax:
   requiere_anotacion_manual: false
 
 etapa_1_triaje:
+  estado: pendiente
   fuente: anotacion_profesional_pendiente
   clases: [SANO, NO_SANO]
   requiere_anotacion_manual: true
 
 etapa_2_diagnostico:
+  estado: pendiente
   fuente: anotacion_profesional_pendiente
   clases: [ALVEOLAR, EFUSION_PLEURAL, INTERSTICIAL, OTRO]
   formato: multi_label

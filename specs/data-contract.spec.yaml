@@ -15,7 +15,8 @@ formato_archivos_por_paciente:
       - vista        # LAT, VD, DV, AP
       - especie       # CANINO, FELINO
       - modalidad     # CR
-proyecciones_admitidas: [LAT, VD, DV]
+# VD/DV sale de los menus reales del equipo (feature 001); AP ya figuraba en el campo `vista`.
+proyecciones_admitidas: [LAT, VD, DV, AP, VD/DV]
 especies_admitidas: [CANINO, FELINO]
 resolucion_minima_px: 512
 anonimizacion:

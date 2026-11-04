@@ -24,11 +24,13 @@ etapas:
     activacion_salida: softmax
     umbral_promocion_balanced_accuracy: 0.90
   etapa_1_triaje:
+    estado: pendiente
     input_shape: [1, 512, 512]   # inferido: mismo backbone/pipeline que etapa_0, sin validar
                                   # todavia (etapa_1 no implementada, ver ground-truth-annotation.spec.yaml)
     output_shape: [2]         # SANO, NO_SANO
     activacion_salida: softmax
   etapa_2_diagnostico:
+    estado: pendiente
     input_shape: [1, 512, 512]   # inferido, mismo motivo que etapa_1
     output_shape: [4]         # ALVEOLAR, EFUSION_PLEURAL, INTERSTICIAL, OTRO
     activacion_salida: sigmoid   # multi_label

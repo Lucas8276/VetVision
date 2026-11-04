@@ -6,7 +6,7 @@ from src.dataset import ETIQUETAS_A_IDX
 from src.model import build_model_etapa0
 
 
-def exportar_onnx(model_path, output_path="models/etapa0_region.onnx", opset=17):
+def exportar_onnx(model_path, output_path="models/etapa0_region.onnx", opset=18):
     model = build_model_etapa0(num_classes=len(ETIQUETAS_A_IDX))
     model.load_state_dict(torch.load(model_path, map_location="cpu"))
     model.eval()
