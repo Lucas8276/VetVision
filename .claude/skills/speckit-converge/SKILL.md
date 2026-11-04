@@ -1,7 +1,7 @@
 ---
 name: "speckit-converge"
-description: "Assess the current codebase against the feature's spec, plan, and tasks, then append any remaining unbuilt work as new tasks to tasks.md so implement can complete it."
-compatibility: "Requires spec-kit project structure with .specify/ directory"
+description: "Evalúa el código actual contra la spec, el plan y las tareas de la funcionalidad, y agrega el trabajo restante sin construir como tareas nuevas en tasks.md para que implement pueda completarlo."
+compatibility: "Requiere la estructura de proyecto de spec-kit con el directorio .specify/"
 metadata:
   author: "github-spec-kit"
   source: "templates/commands/converge.md"
@@ -10,270 +10,263 @@ disable-model-invocation: false
 ---
 
 
-## User Input
+## Entrada del usuario
 
 ```text
 $ARGUMENTS
 ```
 
-You **MUST** consider the user input before proceeding (if not empty).
+**DEBES** considerar la entrada del usuario antes de continuar (si no está vacía).
 
-## Pre-Execution Checks
+## Verificaciones previas a la ejecución
 
-**Check for extension hooks (before convergence)**:
+**Buscar hooks de extensión (antes de la convergencia)**:
+- Verificá si existe `.specify/extensions.yml` en la raíz del proyecto.
+- Si existe, leelo y buscá las entradas bajo la clave `hooks.before_converge`
+- Si el YAML no se puede parsear o no es válido, no lo omitas en silencio: avisale al usuario que no se pudo leer `.specify/extensions.yml` (incluí el error del parser) y que no se verificó ningún hook, incluidos los obligatorios (`optional: false`) registrados ahí, y luego continuá normalmente
+- Descartá los hooks cuyo campo `enabled` sea explícitamente `false`. Los hooks sin campo `enabled` se consideran habilitados por defecto.
+- Para cada hook restante, **no** intentes interpretar ni evaluar las expresiones del campo `condition`:
+  - Si el hook no tiene campo `condition`, o es nulo/vacío, tratá el hook como ejecutable
+  - Si el hook define un `condition` no vacío, omití el hook y dejá la evaluación de la condición a la implementación de HookExecutor
+- Al armar las invocaciones de comandos a partir de los nombres de comando de los hooks, reemplazá los puntos (`.`) por guiones (`-`). Por ejemplo, `speckit.git.commit` → `/speckit-git-commit`.
+- Para cada hook ejecutable, emití lo siguiente según su indicador `optional`:
+  - **Hook opcional** (`optional: true`):
+    ```
+    ## Hooks de extensión
 
-- Check if `.specify/extensions.yml` exists in the project root.
-- If it exists, read it and look for entries under the `hooks.before_converge` key
-- If the YAML cannot be parsed or is invalid, do not skip silently: tell the user that `.specify/extensions.yml` could not be read (include the parser error) and that no hooks were checked, including any mandatory (`optional: false`) hooks registered there, then continue normally
-- Filter out hooks where `enabled` is explicitly `false`. Treat hooks without an `enabled` field as enabled by default.
-- For each remaining hook, do **not** attempt to interpret or evaluate hook `condition` expressions:
-  - If the hook has no `condition` field, or it is null/empty, treat the hook as executable
-  - If the hook defines a non-empty `condition`, skip the hook and leave condition evaluation to the HookExecutor implementation
-- When constructing command invocations from hook command names, replace dots (`.`) with hyphens (`-`). For example, `speckit.git.commit` → `/speckit-git-commit`.
-- For each executable hook, output the following based on its `optional` flag:
-  - **Optional hook** (`optional: true`):
-
-    ```text
-    ## Extension Hooks
-
-    **Optional Pre-Hook**: {extension}
-    Command: `/{command}`
-    Description: {description}
+    **Pre-hook opcional**: {extension}
+    Comando: `/{command}`
+    Descripción: {description}
 
     Prompt: {prompt}
-    To execute: `/{command}`
+    Para ejecutarlo: `/{command}`
     ```
+  - **Hook obligatorio** (`optional: false`):
+    ```
+    ## Hooks de extensión
 
-  - **Mandatory hook** (`optional: false`):
-
-    ```text
-    ## Extension Hooks
-
-    **Automatic Pre-Hook**: {extension}
-    Executing: `/{command}`
+    **Pre-hook automático**: {extension}
+    Ejecutando: `/{command}`
     EXECUTE_COMMAND: {command}
 
-    Wait for the result of the hook command before proceeding to the Goal.
+    Esperá el resultado del comando del hook antes de continuar con el Objetivo.
     ```
-    After emitting the block above you MUST actually invoke the hook and wait for it to finish before continuing. Run it the same way you would run the command yourself in this agent/session (the invocation may differ from the literal `{command}` id shown above, e.g. a skills-mode agent runs it as `/skill:speckit-...` or `$speckit-...`). Emitting the block alone does not run the hook.
+    Después de emitir el bloque anterior DEBES invocar realmente el hook y esperar a que termine antes de continuar. Ejecutalo de la misma forma en que ejecutarías el comando vos mismo en este agente/sesión (la invocación puede diferir del id literal `{command}` mostrado arriba; por ejemplo, un agente en modo skills lo ejecuta como `/skill:speckit-...` o `$speckit-...`). Emitir el bloque por sí solo no ejecuta el hook.
+- Si no hay hooks registrados o no existe `.specify/extensions.yml`, omití este paso en silencio
 
-- If no hooks are registered or `.specify/extensions.yml` does not exist, skip silently
 
-## Goal
+## Objetivo
 
-Close the gap between what a feature's specification, plan, and tasks call for and what the
-codebase currently implements. Read `spec.md`, `plan.md`, and `tasks.md` as the **sole
-source of intent** (with the constitution as governing constraints), assess the current
-state of the code, determine which requirements, acceptance criteria, plan decisions, and
-existing tasks are unmet, incomplete, or only partially satisfied, and **append each piece
-of remaining work as a new, traceable task** at the bottom of `tasks.md` so that
-`/speckit-implement` can complete it. This command MUST run only after
-`/speckit-implement` has run on the current `tasks.md`, and after `/speckit-tasks` has produced a complete `tasks.md`.
+Cerrar la brecha entre lo que piden la especificación, el plan y las tareas de una funcionalidad y lo que el
+código implementa hoy. Leé `spec.md`, `plan.md` y `tasks.md` como la **única fuente de
+intención** (con la constitution como restricciones rectoras), evaluá el estado actual del código,
+determiná qué requisitos, criterios de aceptación, decisiones del plan y tareas existentes están
+sin cumplir, incompletos o satisfechos solo en parte, y **agregá cada pieza de trabajo restante como una tarea nueva y trazable**
+al final de `tasks.md`, para que `/speckit-implement` pueda completarla. Este comando DEBE ejecutarse únicamente
+después de que `/speckit-implement` se haya ejecutado sobre el `tasks.md` actual, y después de que `/speckit-tasks` haya producido un `tasks.md` completo.
 
-This is **not** a diff tool and does **not** track changes. It assesses the present state
-of the code relative to the feature's artifacts — no git, no branch comparison, no history.
+Esto **no** es una herramienta de diff y **no** registra cambios. Evalúa el estado presente
+del código en relación con los artefactos de la funcionalidad: sin git, sin comparación de ramas, sin historial.
 
-## Operating Constraints
+## Restricciones de operación
 
-**APPEND-ONLY, NEVER REWRITE**: The command's **only** write is appending a new
-`## Phase N: Convergence` section to `tasks.md`. It MUST NOT:
+**SOLO AGREGAR, NUNCA REESCRIBIR**: La **única** escritura del comando es agregar una nueva
+sección `## Fase N: Convergencia` a `tasks.md`. NO DEBE:
 
-- modify `spec.md` or `plan.md` in any way;
-- rewrite, renumber, reorder, or delete any existing task (including tasks from a prior
-  Convergence phase);
-- modify, create, or delete any application code — completing the appended tasks is the
-  job of `/speckit-implement`.
+- modificar `spec.md` ni `plan.md` de ninguna manera;
+- reescribir, renumerar, reordenar ni eliminar ninguna tarea existente (incluidas las tareas de una
+  fase de Convergencia anterior);
+- modificar, crear ni eliminar código de la aplicación: completar las tareas agregadas es
+  trabajo de `/speckit-implement`.
 
-When the codebase already satisfies everything, the command MUST leave `tasks.md`
-**byte-for-byte unchanged** (no empty Convergence header) and report a clean result.
+Cuando el código ya satisface todo, el comando DEBE dejar `tasks.md`
+**idéntico byte por byte** (sin encabezado de Convergencia vacío) e informar un resultado limpio.
 
-**Constitution Authority**: The project constitution (`.specify/memory/constitution.md`) is
-**non-negotiable**. Code that violates a MUST principle is the highest-severity finding and
-produces a corresponding remediation task. If the constitution is an unfilled template,
-skip constitution checks gracefully rather than failing.
+**Autoridad de la constitution**: La constitution del proyecto (`.specify/memory/constitution.md`) es
+**innegociable**. El código que viola un principio DEBE es el hallazgo de mayor severidad y
+produce la correspondiente tarea de remediación. Si la constitution es una plantilla sin completar,
+omití las verificaciones de la constitution con naturalidad en lugar de fallar.
 
-## Execution Steps
+## Pasos de ejecución
 
-### 1. Initialize Convergence Context
+### 1. Inicializar el contexto de convergencia
 
-Run `.specify/scripts/powershell/check-prerequisites.ps1 -Json -RequireSpec -RequireTasks -IncludeTasks` once from repo root and parse JSON for FEATURE_DIR and AVAILABLE_DOCS. Derive absolute paths:
+Ejecutá `.specify/scripts/powershell/check-prerequisites.ps1 -Json -RequireSpec -RequireTasks -IncludeTasks` una vez desde la raíz del repositorio y parseá el JSON para obtener FEATURE_DIR y AVAILABLE_DOCS. Derivá las rutas absolutas:
 
 - SPEC = FEATURE_DIR/spec.md
 - PLAN = FEATURE_DIR/plan.md
 - TASKS = FEATURE_DIR/tasks.md
-- CONSTITUTION = `.specify/memory/constitution.md` (if present)
-If `spec.md`, `plan.md`, or `tasks.md` is missing, STOP with a clear, actionable message naming the
-prerequisite command to run (`/speckit-specify` for a missing spec, `/speckit-plan` for a missing plan,
-`/speckit-tasks` for missing tasks). Do not produce partial output.
-For single quotes in args like "I'm Groot", use escape syntax: e.g 'I'\''m Groot' (or double-quote if possible: "I'm Groot").
+- CONSTITUTION = `.specify/memory/constitution.md` (si existe)
+Si falta `spec.md`, `plan.md` o `tasks.md`, DETENETE con un mensaje claro y accionable que nombre el
+comando prerrequisito a ejecutar (`/speckit-specify` si falta la spec, `/speckit-plan` si falta el plan,
+`/speckit-tasks` si faltan las tareas). No produzcas una salida parcial.
+Para las comillas simples en los argumentos, como "I'm Groot", usá la sintaxis de escape: p. ej. 'I'\''m Groot' (o comillas dobles si es posible: "I'm Groot").
 
-### 2. Load Artifacts (Progressive Disclosure)
+### 2. Cargar los artefactos (divulgación progresiva)
 
-Load only the minimal necessary context from each artifact:
+Cargá solo el contexto mínimo necesario de cada artefacto:
 
-**From spec.md:**
+**De spec.md:**
 
-- Functional Requirements (FR-###)
-- Success Criteria (SC-###) — include only items requiring buildable work; exclude
-  post-launch outcome metrics and business KPIs
-- User Stories and their Acceptance Scenarios
-- Edge Cases (if present)
+- Requisitos funcionales (FR-###)
+- Criterios de éxito (SC-###): incluí solo los que requieren trabajo construible; excluí
+  las métricas de resultado posteriores al lanzamiento y los KPI de negocio
+- Historias de usuario y sus escenarios de aceptación
+- Casos límite (si los hay)
 
-**From plan.md:**
+**De plan.md:**
 
-- Architecture/stack choices and technical decisions
-- Data Model references
-- Phases and named touch-points (files/components the plan says will be created or edited)
-- Technical constraints
+- Elecciones de arquitectura/stack y decisiones técnicas
+- Referencias al modelo de datos
+- Fases y puntos de contacto nombrados (archivos/componentes que el plan dice que se crearán o editarán)
+- Restricciones técnicas
 
-**From tasks.md:**
+**De tasks.md:**
 
-- Task IDs (to compute the next ID and next phase number)
-- Descriptions, phase grouping, and referenced file paths
+- IDs de tarea (para calcular el próximo ID y el próximo número de fase)
+- Descripciones, agrupación por fase y rutas de archivo referenciadas
 
-**From constitution (if not an unfilled template):**
+**De la constitution (si no es una plantilla sin completar):**
 
-- Principle names and MUST/SHOULD normative statements
+- Nombres de los principios y declaraciones normativas DEBE/DEBERÍA
 
-### 3. Build the Intent Inventory
+### 3. Construir el inventario de intención
 
-Create an internal model (do not echo raw artifacts):
+Creá un modelo interno (no repitas los artefactos crudos):
 
-- **Requirements inventory**: one stable key per FR-### / SC-### / user-story acceptance
-  scenario (e.g. `US1/AC2`), plus the plan decisions and constitution principles that
-  impose buildable obligations.
-- **Code-scope map**: from the file paths named in `plan.md` and `tasks.md`, plus a keyword
-  search for the concepts each requirement describes, derive the set of source files and
-  components in scope for assessment. Bound the assessment to these — do **not** infer
-  scope beyond what the artifacts define.
+- **Inventario de requisitos**: una clave estable por cada FR-### / SC-### / escenario de aceptación de
+  historia de usuario (p. ej. `US1/AC2`), más las decisiones del plan y los principios de la constitution que
+  imponen obligaciones construibles.
+- **Mapa del alcance del código**: a partir de las rutas de archivo nombradas en `plan.md` y `tasks.md`, más una búsqueda
+  por palabras clave de los conceptos que describe cada requisito, derivá el conjunto de archivos fuente y
+  componentes dentro del alcance de la evaluación. Acotá la evaluación a ellos: **no** infieras
+  un alcance mayor al que definen los artefactos.
 
-### 4. Assess the Codebase and Classify Findings
+### 4. Evaluar el código y clasificar los hallazgos
 
-For each item in the intent inventory, inspect the current code in scope and produce a
-`Finding` only where there is a gap. Classify every finding by **gap type**:
+Por cada elemento del inventario de intención, inspeccioná el código actual dentro del alcance y producí un
+`Hallazgo` solo donde haya una brecha. Clasificá cada hallazgo por **tipo de brecha**:
 
-- **`missing`**: the required work is absent from the code entirely.
-- **`partial`**: the work exists but does not yet fully satisfy the requirement /
-  acceptance criterion / plan decision.
-- **`contradicts`**: the code does something that conflicts with stated intent or a
-  constitution MUST principle.
-- **`unrequested`**: the code contains work not called for by the spec, plan, or tasks
-  (surfaced for awareness — converge does **not** delete code, it only appends a task to
-  review/justify or remove it).
+- **`missing`** (falta): el trabajo requerido está completamente ausente del código.
+- **`partial`** (parcial): el trabajo existe pero todavía no satisface por completo el requisito /
+  criterio de aceptación / decisión del plan.
+- **`contradicts`** (contradice): el código hace algo que entra en conflicto con la intención declarada o con un
+  principio DEBE de la constitution.
+- **`unrequested`** (no pedido): el código contiene trabajo que no piden la spec, el plan ni las tareas
+  (se muestra para tomar conocimiento: converge **no** borra código, solo agrega una tarea para
+  revisarlo/justificarlo o eliminarlo).
 
-Each `Finding` records: a stable id, the `source-ref` it traces to, the `gap-type`, a
-severity, and a short human-readable description with the evidence (the file/area observed).
+Cada `Hallazgo` registra: un id estable, el `source-ref` al que se remonta, el `gap-type`, una
+severidad y una descripción breve legible con la evidencia (el archivo/área observado).
 
-**Edge cases:**
+**Casos límite:**
 
-- **Little or no code yet**: treat the entire specified scope as `missing` remaining work
-  rather than failing.
-- **Nothing remains**: produce zero findings and follow the converged branch in Step 7.
+- **Poco o ningún código todavía**: tratá todo el alcance especificado como trabajo restante `missing`
+  en lugar de fallar.
+- **No queda nada**: producí cero hallazgos y seguí la rama de convergencia lograda del Paso 7.
 
-### 5. Assign Severity
+### 5. Asignar severidad
 
-- **CRITICAL**: violates a constitution MUST principle, or a `missing`/`contradicts` gap
-  that blocks baseline functionality of a P1 user story.
-- **HIGH**: a `missing` or `partial` gap on a core functional requirement or acceptance
-  criterion.
-- **MEDIUM**: a `partial` gap on a secondary requirement, or an `unrequested` addition with
-  unclear justification.
-- **LOW**: minor partial gaps, polish, or low-risk `unrequested` additions.
+- **CRÍTICO**: viola un principio DEBE de la constitution, o una brecha `missing`/`contradicts`
+  que bloquea la funcionalidad base de una historia de usuario P1.
+- **ALTO**: una brecha `missing` o `partial` en un requisito funcional central o un criterio de
+  aceptación.
+- **MEDIO**: una brecha `partial` en un requisito secundario, o una adición `unrequested` con
+  justificación poco clara.
+- **BAJO**: brechas parciales menores, pulido, o adiciones `unrequested` de bajo riesgo.
 
-### 6. Present the In-Session Findings Summary
+### 6. Presentar el resumen de hallazgos en la sesión
 
-Before appending anything, output a compact, severity-graded summary (no file writes yet):
+Antes de agregar nada, mostrá un resumen compacto graduado por severidad (todavía sin escribir archivos):
 
-## Convergence Findings
+## Hallazgos de convergencia
 
-| ID | Gap Type | Severity | Source | Evidence | Remaining Work |
-|----|----------|----------|--------|----------|----------------|
-| F1 | missing  | HIGH     | FR-008 | Example: no append-only guard detected in path/to/module.py when writing tasks.md | Add append-only enforcement |
+| ID | Tipo de brecha | Severidad | Origen | Evidencia | Trabajo restante |
+|----|----------------|-----------|--------|-----------|------------------|
+| F1 | missing        | ALTO      | FR-008 | Ejemplo: no se detecta protección de solo-agregar en path/to/module.py al escribir tasks.md | Agregar el cumplimiento de solo-agregar |
 
-**Summary metrics:**
+**Métricas del resumen:**
 
-- Requirements / acceptance criteria checked
-- Plan decisions checked
-- Constitution principles checked (or "skipped — template")
-- Findings by gap type (missing / partial / contradicts / unrequested)
-- Findings by severity
+- Requisitos / criterios de aceptación verificados
+- Decisiones del plan verificadas
+- Principios de la constitution verificados (o "omitido: plantilla")
+- Hallazgos por tipo de brecha (missing / partial / contradicts / unrequested)
+- Hallazgos por severidad
 
-### 7. Append Convergence Tasks (or report converged)
+### 7. Agregar las tareas de convergencia (o informar que ya convergió)
 
-**If there are one or more actionable findings** (`tasks_appended` outcome):
+**Si hay uno o más hallazgos accionables** (resultado `tasks_appended`):
 
-Append to the **end** of `tasks.md`, per the append contract:
+Agregá al **final** de `tasks.md`, según el contrato de agregado:
 
-1. Scan all existing task IDs; let `M` be the maximum. Determine the next phase number `N`
-   (highest existing phase + 1).
-2. Write a single new section header `## Phase N: Convergence`.
-3. Emit one checklist item per actionable finding, ordered CRITICAL/HIGH first, assigning
-   zero-padded IDs `T{M+1:03d}, T{M+2:03d}, …`:
+1. Escaneá todos los IDs de tarea existentes; sea `M` el máximo. Determiná el próximo número de fase `N`
+   (la fase más alta existente + 1).
+2. Escribí un único encabezado de sección nuevo `## Fase N: Convergencia`.
+3. Emití un ítem de checklist por hallazgo accionable, ordenados con los CRÍTICOS/ALTOS primero, asignando
+   IDs con ceros a la izquierda `T{M+1:03d}, T{M+2:03d}, …`:
 
    ```markdown
-   - [ ] T042 <imperative description> per <source-ref> (<gap-type>)
+   - [ ] T042 <descripción imperativa> según <source-ref> (<gap-type>)
    ```
 
-   `<source-ref>` traces the task to its origin: e.g. `FR-003`, `SC-002`,
-   `US1/AC2`, `plan: storage decision`, `Constitution II`.
+   `<source-ref>` remonta la tarea a su origen: p. ej. `FR-003`, `SC-002`,
+   `US1/AC2`, `plan: decisión de almacenamiento`, `Constitution II`.
 
-   `<gap-type>` is one of `missing`, `partial`, `contradicts`, `unrequested`.
+   `<gap-type>` es uno de `missing`, `partial`, `contradicts`, `unrequested`.
 
-   Constitution-violation tasks MUST be emitted first and described as
-   `CRITICAL`.
-4. Never reuse or renumber existing IDs. If a prior Convergence phase exists, add a new,
-   separately-numbered one below it — do not touch the old one.
+   Las tareas por violación de la constitution DEBEN emitirse primero y describirse como
+   `CRÍTICO`.
+4. Nunca reutilices ni renumeres IDs existentes. Si ya existe una fase de Convergencia previa, agregá una nueva,
+   con numeración propia, debajo: no toques la anterior.
 
-**If there are no actionable findings** (`converged` outcome):
+**Si no hay hallazgos accionables** (resultado `converged`):
 
-- Do **not** modify `tasks.md` at all — no empty phase header.
-- Report: **"✅ Converged — the implementation satisfies the spec, plan, and tasks."**
-- Include the summary counts of what was checked.
+- **No** modifiques `tasks.md` en absoluto: ni siquiera un encabezado de fase vacío.
+- Informá: **"✅ Convergió: la implementación satisface la spec, el plan y las tareas."**
+- Incluí los conteos resumidos de lo que se verificó.
 
-### 8. Provide Next Actions (Handoff)
+### 8. Indicar las próximas acciones (traspaso)
 
-- On `tasks_appended`: state how many tasks were appended under which phase, and recommend
-  running `/speckit-implement` to complete them; note that a follow-up converge
-  run will find fewer or no remaining items.
-- On `converged`: recommend proceeding to review / opening a PR. No further implement pass
-  is needed for this feature's specified scope.
+- En `tasks_appended`: indicá cuántas tareas se agregaron en qué fase y recomendá
+  ejecutar `/speckit-implement` para completarlas; aclará que una nueva ejecución de converge
+  encontrará menos elementos pendientes, o ninguno.
+- En `converged`: recomendá pasar a la revisión / abrir un PR. No hace falta otra pasada de implement
+  para el alcance especificado de esta funcionalidad.
 
-### 9. Check for extension hooks
+### 9. Buscar hooks de extensión
 
-After producing the result, check if `.specify/extensions.yml` exists in the project root.
+Después de producir el resultado, verificá si existe `.specify/extensions.yml` en la raíz del proyecto.
 
-- If it exists, read it and look for entries under the `hooks.after_converge` key
-- If the YAML cannot be parsed or is invalid, do not skip silently: tell the user that `.specify/extensions.yml` could not be read (include the parser error) and that no hooks were checked, including any mandatory (`optional: false`) hooks registered there, then continue normally
-- Filter out hooks where `enabled` is explicitly `false`. Treat hooks without an `enabled` field as enabled by default.
-- For each remaining hook, do **not** attempt to interpret or evaluate hook `condition` expressions:
-  - If the hook has no `condition` field, or it is null/empty, treat the hook as executable
-  - If the hook defines a non-empty `condition`, skip the hook and leave condition evaluation to the HookExecutor implementation
-- Report the convergence outcome (`converged` or `tasks_appended`) in-session before listing
-  any hooks, so users can decide whether to run optional follow-up commands.
-- When constructing command invocations from hook command names, replace dots (`.`) with hyphens (`-`). For example, `speckit.git.commit` → `/speckit-git-commit`.
-- For each executable hook, output the following based on its `optional` flag:
-  - **Optional hook** (`optional: true`):
+Informá el resultado de la convergencia (`converged` o `tasks_appended`) en la sesión antes de listar
+cualquier hook, para que los usuarios puedan decidir si ejecutan comandos opcionales de seguimiento.
 
-    ```text
-    ## Extension Hooks
+- Si existe, leelo y buscá las entradas bajo la clave `hooks.after_converge`
+- Si el YAML no se puede parsear o no es válido, no lo omitas en silencio: avisale al usuario que no se pudo leer `.specify/extensions.yml` (incluí el error del parser) y que no se verificó ningún hook, incluidos los obligatorios (`optional: false`) registrados ahí, y luego continuá normalmente
+- Descartá los hooks cuyo campo `enabled` sea explícitamente `false`. Los hooks sin campo `enabled` se consideran habilitados por defecto.
+- Para cada hook restante, **no** intentes interpretar ni evaluar las expresiones del campo `condition`:
+  - Si el hook no tiene campo `condition`, o es nulo/vacío, tratá el hook como ejecutable
+  - Si el hook define un `condition` no vacío, omití el hook y dejá la evaluación de la condición a la implementación de HookExecutor
+- Al armar las invocaciones de comandos a partir de los nombres de comando de los hooks, reemplazá los puntos (`.`) por guiones (`-`). Por ejemplo, `speckit.git.commit` → `/speckit-git-commit`.
+- Para cada hook ejecutable, emití lo siguiente según su indicador `optional`:
+  - **Hook opcional** (`optional: true`):
+    ```
+    ## Hooks de extensión
 
-    **Optional Hook**: {extension}
-    Command: `/{command}`
-    Description: {description}
+    **Hook opcional**: {extension}
+    Comando: `/{command}`
+    Descripción: {description}
 
     Prompt: {prompt}
-    To execute: `/{command}`
+    Para ejecutarlo: `/{command}`
     ```
+  - **Hook obligatorio** (`optional: false`):
+    ```
+    ## Hooks de extensión
 
-  - **Mandatory hook** (`optional: false`):
-
-    ```text
-    ## Extension Hooks
-
-    **Automatic Hook**: {extension}
-    Executing: `/{command}`
+    **Hook automático**: {extension}
+    Ejecutando: `/{command}`
     EXECUTE_COMMAND: {command}
     ```
-    After emitting the block above you MUST actually invoke the hook and wait for it to finish before continuing. Run it the same way you would run the command yourself in this agent/session (the invocation may differ from the literal `{command}` id shown above, e.g. a skills-mode agent runs it as `/skill:speckit-...` or `$speckit-...`). Emitting the block alone does not run the hook.
+    Después de emitir el bloque anterior DEBES invocar realmente el hook y esperar a que termine antes de continuar. Ejecutalo de la misma forma en que ejecutarías el comando vos mismo en este agente/sesión (la invocación puede diferir del id literal `{command}` mostrado arriba; por ejemplo, un agente en modo skills lo ejecuta como `/skill:speckit-...` o `$speckit-...`). Emitir el bloque por sí solo no ejecuta el hook.
+- Si no hay hooks registrados o no existe `.specify/extensions.yml`, omití este paso en silencio
 
-- If no hooks are registered or `.specify/extensions.yml` does not exist, skip silently
