@@ -1,5 +1,5 @@
-# Conjunto minimo para CI (torch CPU se instala aparte desde el indice CPU de PyTorch).
-torchvision
+# Conjunto minimo para CI (torch y torchvision se instalan aparte desde el indice CPU de PyTorch,
+# para que sus versiones coincidan).
 torchxrayvision
 opencv-python-headless
 numpy

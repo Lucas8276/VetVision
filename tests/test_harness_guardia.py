@@ -31,7 +31,7 @@ def test_nombre_dicom():
 
 
 def test_id_paciente_campo_y_suelto():
-    assert "R-ID-PACIENTE" in reglas(CAMPO_ID + "4821-7")
+    assert "R-ID-PACIENTE" in reglas(CAMPO_ID + "4821" + "-7")
     assert "R-ID-PACIENTE" in reglas("paciente " + "4821" + "-7" + " ingreso")
     assert reglas(CAMPO_ID + "0000-1") == []
 
