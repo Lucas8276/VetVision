@@ -1,4 +1,6 @@
-"""python -m harness [contratos | guardia | todo | hook <pre-commit|post-edit>]
+"""python -m harness [contratos | guardia | documento | todo | hook <pre-commit|post-edit>]
+
+documento [--dir RUTA] [--entrega]: verifica el documento de entrega (specs/005-harness-v2).
 
 Codigos de salida: 0 sin fallas, 1 al menos una falla, 2 error interno del harness
 (nunca se interpreta como "paso").
@@ -35,8 +37,14 @@ def _aviso_hooks():
               file=sys.stderr)
 
 
-def correr(comando, preparados=False, archivos=None, rapido=False):
-    from harness import contratos, guardia
+def correr(comando, preparados=False, archivos=None, rapido=False, directorio=None, entrega=False,
+           raiz=None):
+    from harness import contratos, documento, guardia
+
+    if comando == "documento":
+        return documento.validar_documento(
+            directorio or documento.DIR_POR_DEFECTO, raiz=raiz or RAIZ, entrega=entrega,
+            por_defecto=directorio is None)
 
     if comando == "contratos":
         return contratos.validar_contratos()
@@ -51,6 +59,7 @@ def correr(comando, preparados=False, archivos=None, rapido=False):
     else:
         res += contratos.validar_contratos()
     res += guardia.guardia("arbol")
+    res += documento.resumen_documento()
     res += _tests()
     _aviso_hooks()
     return res
@@ -92,11 +101,14 @@ def hook(evento):
 
 def main(argv=None):
     ap = argparse.ArgumentParser(prog="harness")
-    ap.add_argument("comando", nargs="?", default="todo", choices=["contratos", "guardia", "todo", "hook"])
+    ap.add_argument("comando", nargs="?", default="todo", choices=["contratos", "guardia", "documento", "todo", "hook"])
     ap.add_argument("evento", nargs="?")
     ap.add_argument("--preparados", action="store_true")
     ap.add_argument("--archivos", nargs="+")
     ap.add_argument("--rapido", action="store_true")
+    ap.add_argument("--dir", dest="directorio", help="documento: directorio a verificar")
+    ap.add_argument("--raiz", help="documento: raiz contra la que se resuelven las fuentes de los hechos")
+    ap.add_argument("--entrega", action="store_true", help="documento: todo pendiente bloquea")
     try:
         args = ap.parse_args(argv)
     except SystemExit as e:
@@ -104,7 +116,8 @@ def main(argv=None):
     try:
         if args.comando == "hook":
             return hook(args.evento or "")
-        res = correr(args.comando, args.preparados, args.archivos, args.rapido)
+        res = correr(args.comando, args.preparados, args.archivos, args.rapido,
+                     args.directorio, args.entrega, args.raiz)
         _imprimir(res)
         return codigo_de_salida(res)
     except Exception:
