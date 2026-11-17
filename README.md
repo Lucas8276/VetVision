@@ -162,23 +162,26 @@ mlflow ui                                        # gráficos por época en local
 El entrenamiento deja `models/etapa0_region.pt` (mejor época) y `models/etapa0_region_val_indices.json`
 (qué imágenes quedaron fuera del entrenamiento). Sin `--unfreeze-layers` el backbone queda 100 % congelado.
 
-### Demo web
+### MVP web
 
-Sube una radiografía y muestra TÓRAX / NO TÓRAX con el porcentaje de confianza, usando el modelo real.
-Necesita **dos terminales** (con el entorno activado):
+Carga una radiografía, corre la puerta de región y el modelo de hallazgos (si existe), y deja
+validar, corregir o descartar cada hallazgo hasta cerrar el informe. Un solo comando (con el
+entorno activado):
 
 ```bash
-# Terminal 1: el modelo (dejarla abierta; tarda ~20 s en estar lista)
-python server.py
-
-# Terminal 2: la página
-python -m http.server 8000
+python -m app
 ```
 
-Después abrir `http://127.0.0.1:8000/VetVision%20Demo.dc.html`.
+Abre `http://127.0.0.1:8000/`. Pasos de uso y detalle en [specs/004-mvp-web/quickstart.md](specs/004-mvp-web/quickstart.md).
 
-> El checkpoint `models/etapa0_region.pt` **no se versiona** (`models/` está en `.gitignore`): se comparte
-> por fuera del repositorio y debe colocarse en esa ruta. La demo no necesita el dataset.
+> El checkpoint `models/etapa0_region.onnx` **no se versiona** (`models/` está en `.gitignore`): se
+> comparte por fuera del repositorio y debe colocarse en esa ruta. Si no está, la aplicación arranca
+> igual y lo avisa; la carga de estudios responde con un error claro hasta que el archivo esté
+> presente. El MVP no necesita el dataset: la base y las imágenes cargadas se guardan en `data/app/`
+> (también gitignorado).
+>
+> La demo anterior de una sola pantalla (`server.py`, `VetVision Demo.dc.html`) queda reemplazada por
+> este MVP y se retira del repositorio en una entrega posterior.
 
 ## Estructura del repositorio
 

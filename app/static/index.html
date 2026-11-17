@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>VetVision AI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/static/estilos.css" />
+</head>
+<body>
+<header class="vv-header">
+  <div class="vv-marca">
+    <span class="vv-logo" aria-hidden="true">V</span>
+    <span>VetVision <strong>AI</strong></span>
+  </div>
+  <nav class="vv-nav" aria-label="Secciones">
+    <a href="#nuevo" data-vista="nuevo">Nuevo estudio</a>
+    <a href="#estudios" data-vista="estudios">Estudios</a>
+  </nav>
+</header>
+
+<main id="contenido" class="vv-contenido" aria-live="polite">
+  <!-- app.js reemplaza este contenido segun el hash de la URL (#nuevo, #estudio/CODIGO, #estudios) -->
+  <p>Cargando…</p>
+</main>
+
+<footer class="vv-descargo" role="note">
+  Borrador de apoyo. No es un diagnóstico definitivo ni reemplaza el criterio del veterinario
+  matriculado.
+</footer>
+
+<script src="/static/app.js"></script>
+</body>
+</html>
