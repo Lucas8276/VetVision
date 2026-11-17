@@ -8,25 +8,58 @@ import mlflow
 import torch
 from sklearn.metrics import balanced_accuracy_score
 from torch import nn, optim
-from torch.utils.data import DataLoader, random_split
+from torch.utils.data import DataLoader, Subset, random_split
 
 from src.dataset import VetVisionEtapa0Dataset, ETIQUETAS_A_IDX
 from src.model import build_model_etapa0
+from src.particion import PARTICION_POR_DEFECTO, PARTICIONES_VALIDAS, huella_particion, particion_por_grupos
 
 
 def train(data_dir, epochs=15, batch_size=8, lr=1e-4, val_split=0.2, freeze_backbone=True, seed=42,
-          unfreeze_layers=None, backbone_lr_factor=0.1):
+          unfreeze_layers=None, backbone_lr_factor=0.1, split=PARTICION_POR_DEFECTO,
+          model_path="models/etapa0_region.pt", sobrescribir=False):
     """unfreeze_layers: ver DenseNetEtapa0. backbone_lr_factor: los parametros
     del backbone que queden entrenables usan lr * backbone_lr_factor (mas
     bajo que la cabeza nueva), para no destruir los pesos preentrenados de
-    un salto - practica estandar de fine-tuning parcial."""
+    un salto - practica estandar de fine-tuning parcial.
+
+    split: "paciente" (por defecto) deja todas las placas de un mismo paciente del mismo lado
+    (specs/007-evaluacion-modelo); "imagen" es la particion al azar por imagen de las corridas
+    1 a 3, que mezcla pacientes entre entrenamiento y validacion y solo se conserva para
+    reproducirlas. model_path: donde se guarda el mejor checkpoint; no se pisa uno existente
+    salvo sobrescribir=True."""
+    if split not in PARTICIONES_VALIDAS:
+        raise ValueError(f"split debe ser uno de {PARTICIONES_VALIDAS}")
+    model_path = Path(model_path)
+    val_indices_path = model_path.with_name(model_path.stem + "_val_indices.json")
+    if model_path.exists() and not sobrescribir:
+        raise FileExistsError(
+            f"{model_path} ya existe: elegir otro --model-path o pasar --sobrescribir "
+            f"(asi no se pierde el checkpoint de una corrida anterior).")
+    torch.manual_seed(seed)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     dataset = VetVisionEtapa0Dataset(data_dir)
-    n_val = int(len(dataset) * val_split)
-    n_train = len(dataset) - n_val
-    generator = torch.Generator().manual_seed(seed)
-    train_ds, val_ds = random_split(dataset, [n_train, n_val], generator=generator)
+    if split == "paciente":
+        etiquetas = [etiqueta for _, etiqueta in dataset.samples]
+        idx_train, idx_val = particion_por_grupos(etiquetas, dataset.grupos, val_split=val_split, seed=seed)
+        train_ds, val_ds = Subset(dataset, idx_train), Subset(dataset, idx_val)
+    else:
+        n_val = int(len(dataset) * val_split)
+        generator = torch.Generator().manual_seed(seed)
+        train_ds, val_ds = random_split(dataset, [len(dataset) - n_val, n_val], generator=generator)
+    n_train, n_val = len(train_ds), len(val_ds)
+    grupos_train = {dataset.grupos[i] for i in train_ds.indices}
+    grupos_val = {dataset.grupos[i] for i in val_ds.indices}
+    n_grupos_compartidos = len((grupos_train & grupos_val) - {None})
+    print(f"particion '{split}': {n_train} train / {n_val} val - grupos de paciente compartidos: "
+          f"{n_grupos_compartidos}", flush=True)
+
+    # Los indices de validacion se guardan ANTES de entrenar: si la corrida se interrumpe, el
+    # mejor checkpoint parcial igual se puede evaluar sobre el held-out correcto.
+    model_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(val_indices_path, "w", encoding="utf-8") as f:
+        json.dump([int(i) for i in val_ds.indices], f)
 
     train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=True)
     val_loader = DataLoader(val_ds, batch_size=batch_size)
@@ -55,6 +88,12 @@ def train(data_dir, epochs=15, batch_size=8, lr=1e-4, val_split=0.2, freeze_back
             "n_val": n_val,
             # conteo, nunca IDs de estudios individuales (Principio IV)
             "n_excluidos_desconocida": dataset.n_excluidos_desconocida,
+            "split": split,
+            "seed": seed,
+            "n_grupos_train": len(grupos_train),
+            "n_grupos_val": len(grupos_val),
+            "n_grupos_compartidos": n_grupos_compartidos,
+            "huella_particion_val": huella_particion(val_ds.indices),
         })
 
         best_balanced_acc = -1.0
@@ -98,6 +137,8 @@ def train(data_dir, epochs=15, batch_size=8, lr=1e-4, val_split=0.2, freeze_back
                 best_balanced_acc = val_balanced_acc
                 best_epoch = epoch + 1
                 best_state_dict = copy.deepcopy(model.state_dict())
+                # Se escribe a disco en cada mejora: una interrupcion no pierde lo ya entrenado.
+                torch.save(best_state_dict, model_path)
 
             mlflow.log_metrics(
                 {
@@ -123,19 +164,14 @@ def train(data_dir, epochs=15, batch_size=8, lr=1e-4, val_split=0.2, freeze_back
             flush=True,
         )
 
-        Path("models").mkdir(exist_ok=True)
-        model_path = "models/etapa0_region.pt"
         torch.save(best_state_dict, model_path)
-        mlflow.log_artifact(model_path)
+        mlflow.log_artifact(str(model_path))
 
         # Persistir que imagenes quedaron en validacion (no en el split de
         # entrenamiento), para que evaluate.py pueda medir sobre un held-out
         # real en vez de sobre el dataset completo (que incluiria imagenes ya
         # vistas en entrenamiento e infla la metrica). Ver evaluate.py.
-        val_indices_path = "models/etapa0_region_val_indices.json"
-        with open(val_indices_path, "w", encoding="utf-8") as f:
-            json.dump(list(val_ds.indices), f)
-        mlflow.log_artifact(val_indices_path)
+        mlflow.log_artifact(str(val_indices_path))
 
         model.load_state_dict(best_state_dict)  # el objeto devuelto debe coincidir con lo guardado
 
@@ -153,9 +189,16 @@ if __name__ == "__main__":
                          help="Nombres de submodulos de features a descongelar, separados por coma "
                               "(ej. 'denseblock4,norm5'). Vacio = backbone 100% congelado (default).")
     parser.add_argument("--backbone-lr-factor", type=float, default=0.1)
+    parser.add_argument("--split", choices=PARTICIONES_VALIDAS, default=PARTICION_POR_DEFECTO,
+                        help="paciente (por defecto): ninguna placa de un paciente queda en train y val a "
+                             "la vez. imagen: particion al azar por imagen de las corridas 1 a 3.")
+    parser.add_argument("--model-path", default="models/etapa0_region.pt")
+    parser.add_argument("--sobrescribir", action="store_true",
+                        help="Permite pisar un checkpoint existente en --model-path.")
     args = parser.parse_args()
     unfreeze_layers = [s for s in args.unfreeze_layers.split(",") if s]
     train(
         args.data_dir, epochs=args.epochs, batch_size=args.batch_size, lr=args.lr, seed=args.seed,
         unfreeze_layers=unfreeze_layers, backbone_lr_factor=args.backbone_lr_factor,
+        split=args.split, model_path=args.model_path, sobrescribir=args.sobrescribir,
     )

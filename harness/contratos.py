@@ -70,6 +70,11 @@ class _Codigo:
 
         return UMBRAL_PROMOCION_ACC
 
+    def particion(self):
+        from src.particion import PARTICION_POR_DEFECTO
+
+        return PARTICION_POR_DEFECTO
+
     def opset(self):
         import inspect
 
@@ -114,6 +119,7 @@ def _verificadores(c):
         ("model-tensor", "etapas", "etapa_0_torax", "input_shape"): (c.forma_entrada, "eq"),
         ("model-tensor", "etapas", "etapa_0_torax", "output_shape"): (lambda: [c.n_salidas()], "eq"),
         ("model-tensor", "etapas", "etapa_0_torax", "umbral_promocion_balanced_accuracy"): (c.umbral, "eq"),
+        ("model-tensor", "etapas", "etapa_0_torax", "particion_validacion"): (c.particion, "eq"),
         ("model-tensor", "export", "opset"): (c.opset, "eq"),
         ("ground-truth-annotation", "etapa_0_torax", "clases"): (c.clases_etapa0, "conjunto"),
         ("data-contract", "proyecciones_admitidas"): (c.vistas, "conjunto"),

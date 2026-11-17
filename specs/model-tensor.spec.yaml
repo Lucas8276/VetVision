@@ -23,6 +23,9 @@ etapas:
     output_shape: [2]         # TORAX, NO_TORAX
     activacion_salida: softmax
     umbral_promocion_balanced_accuracy: 0.90
+    # Todas las placas de un paciente quedan del mismo lado (specs/007-evaluacion-modelo).
+    # Las corridas 1 a 3 usaron particion por imagen, que mezcla pacientes entre train y val.
+    particion_validacion: paciente
   etapa_1_triaje:
     estado: pendiente
     input_shape: [1, 512, 512]   # inferido: mismo backbone/pipeline que etapa_0, sin validar

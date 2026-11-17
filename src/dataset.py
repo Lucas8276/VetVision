@@ -5,6 +5,7 @@ import torchxrayvision as xrv
 from torch.utils.data import Dataset
 
 from src.parser_fcr import parsear_metadata_fcr
+from src.particion import grupo_paciente
 from src.preprocessing import normalizar_jpg_veterinario
 
 ETIQUETAS_A_IDX = {"NO_TORAX": 0, "TORAX": 1}
@@ -38,6 +39,9 @@ class VetVisionEtapa0Dataset(Dataset):
         self.data_dir = Path(data_dir)
         self.transform = transform
         self.samples = []
+        # Grupo de paciente (hash) de cada muestra, alineado con samples: lo usa la particion
+        # por paciente de src/particion.py. Nunca el identificador en claro (007, FR-004).
+        self.grupos = []
         self.n_excluidos_desconocida = 0
 
         # Se indexan los .jpg una sola vez (por stem exacto), en vez de hacer
@@ -61,6 +65,7 @@ class VetVisionEtapa0Dataset(Dataset):
                 continue
 
             self.samples.append((jpg_path, ETIQUETAS_A_IDX[etiqueta]))
+            self.grupos.append(grupo_paciente(metadata["id_paciente"]))
 
     def _encontrar_jpg_pesado(self, txt_path):
         candidato_pesado = self._jpgs_por_stem.get(txt_path.stem + "_pesado")
