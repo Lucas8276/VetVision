@@ -98,7 +98,8 @@ entregado funciona y se puede explicar", gana lo segundo.
   `python -m harness [contratos|guardia|todo]` con códigos 0/1/2 (9 campos de contrato `ok`, 4 secciones
   `pendiente`, **21 `sin_verificacion`**); guardia de datos personales; 61 tests; CI `verificar`; hooks de
   Claude (`$CLAUDE_PROJECT_DIR`) y de git (se activan por clon con `python scripts/instalar_hooks.py`).
-- **Demo web local** (`server.py`, `VetVision Demo.dc.html`, `support.js`): sin spec todavía.
+- **Demo web local de una sola pantalla** (`server.py`, `VetVision Demo.dc.html`, `support.js`): retirada
+  del repositorio el 2026-11-17, reemplazada por el MVP (`app/`, spec `004-mvp-web`).
 - **Pendientes conocidos:** anonimización (bloquea la nube), `_encontrar_jpg_pesado` con código muerto,
   `comparar_ids.py` sin trackear (maneja IDs reales: no se commitea), reorganización de `src/`.
 - Puede haber un commit local sin subir; verificalo. Para subirlo hace falta rama y pull request.

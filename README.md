@@ -124,7 +124,6 @@ Los tres tienen test de regresión. Más contexto en [ENTRENAMIENTOS.md](ENTRENA
 | MLflow | 3.16 | Seguimiento de hiperparámetros y métricas por época |
 | Pillow + pylibjpeg | 12.3 / 2.1 | Solo en la extracción: decodificar `.hq` (JPEG-Lossless) y guardar PNG de 16 bits |
 | ONNX | 1.22 | Exportación del modelo a formato portable |
-| Flask | 3.1 | Servidor local de la demo (`server.py`) |
 | pytest | | 61 tests automáticos |
 | spec-kit | | Flujo de desarrollo guiado por especificaciones (ver más abajo) |
 
@@ -180,8 +179,8 @@ Abre `http://127.0.0.1:8000/`. Pasos de uso y detalle en [specs/004-mvp-web/quic
 > presente. El MVP no necesita el dataset: la base y las imágenes cargadas se guardan en `data/app/`
 > (también gitignorado).
 >
-> La demo anterior de una sola pantalla (`server.py`, `VetVision Demo.dc.html`) queda reemplazada por
-> este MVP y se retira del repositorio en una entrega posterior.
+> La demo anterior de una sola pantalla (`server.py`, `VetVision Demo.dc.html`) quedó reemplazada por
+> este MVP y se retiró del repositorio (2026-11-17).
 
 ## Estructura del repositorio
 
@@ -196,8 +195,6 @@ Abre `http://127.0.0.1:8000/`. Pasos de uso y detalle en [specs/004-mvp-web/quic
 │   ├── evaluate.py         #   exactitud balanceada sobre el conjunto de validación fijo
 │   └── export_onnx.py      #   exportación a ONNX
 ├── limpiar_datos_fcr.py    # extracción y clasificación de los archivos del equipo de rayos X
-├── server.py               # servidor local de la demo
-├── VetVision Demo.dc.html  # página de la demo (+ support.js, su runtime)
 ├── harness/                # verificación automática: contratos, guardia de datos, tests
 ├── tests/                  # 61 tests automáticos
 ├── specs/                  # especificaciones (ver más abajo)

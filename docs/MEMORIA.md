@@ -82,18 +82,34 @@
   fuga inflaba la métrica, pero no de forma dramática. **Este es el checkpoint que usa la aplicación**
   (`models/etapa0_region.pt`/`.onnx`); el de la Corrida 3 se conserva como `..._c3.*` para referencia.
   Detalle completo en `ENTRENAMIENTOS.md`, Corrida 4.
-- Medición exploratoria adicional de la Corrida 3 (ya con la salvedad de la fuga, sin repetir todavía
-  sobre la Corrida 4): ROC-AUC 0,955, sensibilidad para TORAX 88,3 %, especificidad 96,6 %, latencia de
-  punta a punta en CPU con mediana de 0,14 s por imagen. `[PENDIENTE: repetir esta medición sobre la
-  Corrida 4]`.
+- **Medición completa repetida sobre la Corrida 4** (2026-11-17, mismo conjunto de validación de 1601
+  imágenes sin fuga): ROC-AUC 94,47 % (IC95 93,10–95,73), sensibilidad para TORAX 89,31 % (IC95
+  87,15–91,34), especificidad para NO_TORAX 93,59 % (IC95 91,86–95,24), calibración razonable (ECE
+  3,6 %; por encima de 95 % de confianza el acierto real es 95,7 %), latencia de punta a punta en CPU
+  con mediana de 0,189 s por imagen. Por especie: canino 91,94 % de acierto (n=1352), **felino 86,80 %
+  (n=197)** — confirma que dejar felinos fuera del alcance evaluado fue la decisión correcta por ahora.
+  Hallazgo nuevo, sin confirmar con casos concretos: por **nombre** de paciente (no por ID) hay 97
+  pacientes (30 % de la validación) que comparten nombre con entrenamiento, con ~3 puntos de mejor
+  desempeño que los realmente nuevos. Explicación más probable (equipo, 2026-11-17): el mismo animal
+  con placas de distintos momentos, registrado con un ID nuevo en cada visita — no un error del
+  parser ni una coincidencia de nombres. Si es así, la partición por paciente (`grupo_paciente`,
+  spec 007) no lo detecta porque agrupa por ID, no por identidad real del animal; es una limitación
+  conocida de cómo el equipo de origen asigna el ID, no del código. No amerita una corrección ahora:
+  dejarlo registrado como limitación del dataset. Detalle en `docs/privado/evaluacion/corrida4/`.
 - **Dataset medido:** 8158 estudios, 8015 con imagen, años 2018 a 2026; 3796 imágenes de tórax
   (3415 caninas, 379 felinas, 2 sin dato de especie).
 - **Diagnósticos:** cruce real contra el dataset (2026-11-17): 111 filas etiquetables, 98 pacientes con
   veredicto sano/no sano (28 normales, 70 no sanos) — Etapa 1 queda en carácter exploratorio por el
   tamaño de muestra. Detalle agregado en `docs/privado/etiquetas/resumen_etiquetas.md` (privado).
 - **MVP web implementado** (`app/`, spec `004-mvp-web`): API con FastAPI, ONNX Runtime y SQLite, 59
-  tests, incluida la paridad real ONNX↔PyTorch. Reemplaza a la demo de una sola pantalla (`server.py`,
-  en retiro). `python -m app` lo levanta con un solo comando.
+  tests, incluida la paridad real ONNX↔PyTorch. Reemplaza a la demo de una sola pantalla; `server.py`,
+  `VetVision Demo.dc.html` y `support.js` se retiraron del repositorio el 2026-11-17 (decisión del
+  equipo), junto con `flask`/`flask-cors` de `requirements.txt` (sin otro uso). `python -m app` lo
+  levanta con un solo comando. Panel visual rediseñado (2026-11-17)
+  sobre la misma identidad oscura/turquesa: barra de confianza con umbrales, invertir/realzar
+  contraste de la imagen, filtros y búsqueda en el listado; sin tocar la lógica ni romper tests.
+  Pendiente de revisión visual humana en el navegador y de decidir si corregir región manualmente
+  (como hallazgos) es parte del alcance.
 - **Harness:** 158 tests; contratos con 12 campos `ok`, 4 secciones `pendiente` y 21 campos
   `sin_verificacion`. Nuevo subcomando `python -m harness documento` (verifica el documento de entrega:
   hechos, citas, datos personales, descargo, revisión humana). CI en verde.
