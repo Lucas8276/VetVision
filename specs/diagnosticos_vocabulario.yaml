@@ -1,0 +1,93 @@
+# Vocabulario canonico de diagnosticos (specs/008-etiquetas-diagnosticos). Sin datos de pacientes:
+# solo terminologia medica generica. `src/diagnosticos.py` lo lee; no hardcodea nada de esto.
+version: 1.0.0
+
+etiquetas:
+  NORMAL: {descripcion: "Estudio de rutina sin hallazgos", torax: true}
+  PATRON_ALVEOLAR: {descripcion: "Patron alveolar o broncoalveolar", torax: true}
+  PATRON_BRONQUIAL: {descripcion: "Patron bronquial", torax: true}
+  PATRON_VASCULAR: {descripcion: "Patron vascular o congestion", torax: true}
+  PATRON_INTERSTICIAL: {descripcion: "Patron intersticial", torax: true}
+  EFUSION_PLEURAL: {descripcion: "Efusion pleural", torax: true}
+  NEUMOTORAX: {descripcion: "Neumotorax", torax: true}
+  CARDIOMEGALIA: {descripcion: "Cardiomegalia", torax: true}
+  MASA_NODULO_METASTASIS: {descripcion: "Masa, nodulo o metastasis", torax: true}
+  HERNIA_DIAFRAGMATICA: {descripcion: "Hernia diafragmatica", torax: true}
+  TRAQUEA: {descripcion: "Colapso u otra alteracion traqueal", torax: true}
+  OTRO_TORACICO: {descripcion: "Hallazgo toracico sin etiqueta especifica", torax: true}
+  HALLAZGO_NO_TORACICO: {descripcion: "Hallazgo fuera del torax (fractura, cuerpo extrano, etc.)", torax: false}
+  RUIDO: {descripcion: "Texto sin terminologia medica reconocible: se excluye del etiquetado", torax: null}
+  REVISAR: {descripcion: "Ambiguo: requiere revision humana, no se etiqueta solo", torax: null}
+
+# Grupos de la Etapa 2 (Nivel 2), ajustados a lo que los datos permiten (research de la Etapa 2).
+grupos_etapa2:
+  ALVEOLAR_BRONCOALVEOLAR: [PATRON_ALVEOLAR]
+  NODULAR_MASAS_METASTASIS: [MASA_NODULO_METASTASIS]
+  PLEURAL: [EFUSION_PLEURAL, NEUMOTORAX]
+  OTRO_TORACICO: [PATRON_BRONQUIAL, PATRON_VASCULAR, PATRON_INTERSTICIAL, CARDIOMEGALIA,
+                  HERNIA_DIAFRAGMATICA, TRAQUEA, OTRO_TORACICO]
+
+# texto normalizado exacto -> etiqueta(s). normalizar_texto() se aplica antes de buscar aca.
+terminos:
+  "s/p": [NORMAL]
+  "sp": [NORMAL]
+  "s/alt": [NORMAL]
+  "s/alteraciones": [NORMAL]
+  "sin alteraciones": [NORMAL]
+  "sin particularidades": [NORMAL]
+  "normal": [NORMAL]
+  "control": [NORMAL]
+  "n": [NORMAL]
+  "patron alveolar": [PATRON_ALVEOLAR]
+  "patron bronco alveolar": [PATRON_ALVEOLAR]
+  "patron broncoalveolar": [PATRON_ALVEOLAR]
+  "patron bronquio alveolar": [PATRON_ALVEOLAR]
+  "bronquio alveolar": [PATRON_ALVEOLAR]
+  "patron bronquial": [PATRON_BRONQUIAL]
+  "pb": [PATRON_BRONQUIAL]
+  "patron vascular": [PATRON_VASCULAR]
+  "congestion": [PATRON_VASCULAR]
+  "patron intersticial": [PATRON_INTERSTICIAL]
+  "efusion": [EFUSION_PLEURAL]
+  "efusion pleural": [EFUSION_PLEURAL]
+  "efusion toraxica": [EFUSION_PLEURAL]
+  "neumotorax": [NEUMOTORAX]
+  "cardiomegalia": [CARDIOMEGALIA]
+  "cardio megalia": [CARDIOMEGALIA]
+  "metastasis": [MASA_NODULO_METASTASIS]
+  "metastasis pulmonar": [MASA_NODULO_METASTASIS]
+  "masa": [MASA_NODULO_METASTASIS]
+  "masa tumoral": [MASA_NODULO_METASTASIS]
+  "tumor": [MASA_NODULO_METASTASIS]
+  "nodulos pulmonares": [MASA_NODULO_METASTASIS]
+  "nodulo": [MASA_NODULO_METASTASIS]
+  "hernia diafragmatica": [HERNIA_DIAFRAGMATICA]
+  "colapso traqueal": [TRAQUEA]
+  "fractura": [HALLAZGO_NO_TORACICO]
+  "luxacion": [HALLAZGO_NO_TORACICO]
+  "osteolisis": [HALLAZGO_NO_TORACICO]
+  "cuerpo extrano": [HALLAZGO_NO_TORACICO]
+  "higado": [HALLAZGO_NO_TORACICO]
+  "obesidad": [REVISAR]  # no es un hallazgo radiografico toracico ni "normal": a confirmar
+
+abreviaturas:
+  "s/p": "sin particularidades"
+  "s/alt": "sin alteraciones"
+  "pb": "patron bronquial"
+
+erratas:
+  "nuemotorax": "neumotorax"
+  "patrom": "patron"
+  "patronm": "patron"
+
+# Disparadores de negacion: la etiqueta que sigue inmediatamente despues NO cuenta como positiva.
+negaciones:
+  - "sin signos de"
+  - "no se observa"
+  - "no se observan"
+  - "sin evidencia de"
+  - "descartar"
+
+fuente:
+  control_y_n: "definicion del equipo, confirmada el 2026-11-16: estudio de rutina, no indica patologia"
+  pendiente_confirmar: ["control", "n"]
