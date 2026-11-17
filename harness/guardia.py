@@ -31,7 +31,7 @@ _RE_SECRETO = [
 ]
 _RE_CONTACTO = [
     re.compile(r"[\w.+-]+@[\w-]+\.[\w.-]+"),
-    re.compile(r"(?<!\d)(?:\+?\d[\d ()\-]{7,}\d)(?!\d)"),
+    re.compile(r"(?<!\d)(?!\d{4}-\d{2}-\d{2})(?:\+?\d[\d ()\-]{7,}\d)(?!\d)"),  # no marca fechas ISO
     re.compile(r"\b(?:Dra?|Dr|Lic|Ing|Sr|Sra)\.\s+[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+"),
 ]
 ARCHIVO_CONTACTO = "docs/MEMORIA.md"

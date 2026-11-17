@@ -125,7 +125,7 @@ Los tres tienen test de regresión. Más contexto en [ENTRENAMIENTOS.md](ENTRENA
 | Pillow + pylibjpeg | 12.3 / 2.1 | Solo en la extracción: decodificar `.hq` (JPEG-Lossless) y guardar PNG de 16 bits |
 | ONNX | 1.22 | Exportación del modelo a formato portable |
 | Flask | 3.1 | Servidor local de la demo (`server.py`) |
-| pytest | | 24 tests automáticos |
+| pytest | | 61 tests automáticos |
 | spec-kit | | Flujo de desarrollo guiado por especificaciones (ver más abajo) |
 
 **Declaradas en `requirements.txt` pero sin uso todavía** (no atribuirlas en la presentación):
@@ -149,7 +149,8 @@ carácter de su barra de progreso.
 ### Tests, entrenamiento y evaluación
 
 ```bash
-pytest                                           # 24 tests
+pytest                                           # 61 tests
+python -m harness                                # contratos + guardia de datos personales + tests
 
 python -m src.train --data-dir <ruta_al_dataset_limpio> --epochs 15 --batch-size 8 --lr 1e-4 \
     --unfreeze-layers denseblock4,norm5          # la configuración de la Corrida 3
@@ -194,7 +195,8 @@ Después abrir `http://127.0.0.1:8000/VetVision%20Demo.dc.html`.
 ├── limpiar_datos_fcr.py    # extracción y clasificación de los archivos del equipo de rayos X
 ├── server.py               # servidor local de la demo
 ├── VetVision Demo.dc.html  # página de la demo (+ support.js, su runtime)
-├── tests/                  # 24 tests automáticos
+├── harness/                # verificación automática: contratos, guardia de datos, tests
+├── tests/                  # 61 tests automáticos
 ├── specs/                  # especificaciones (ver más abajo)
 ├── notebooks/              # exploración del dataset
 ├── ENTRENAMIENTOS.md       # bitácora de cada corrida de entrenamiento
@@ -215,11 +217,12 @@ basados en datos reales, test-first para parsers, protección de datos de pacien
 |---|---|---|
 | `001-fcr-metadata-extraction` | Parser del `.ddo` y del `.txt`, decodificación del `.hq` | Implementada |
 | `002-etapa0-torax-clasificador` | Clasificador binario de Etapa 0 | Implementada y entrenada |
-| `003-harness-verificacion-automatica` | CI, validación automática de specs contra el código, guardia de datos personales | **Especificada y planificada; aún sin implementar** |
+| `003-harness-verificacion-automatica` | CI, validación automática de specs contra el código, guardia de datos personales | Implementada (`python -m harness`, CI `verificar`) |
 
-Además hay tres contratos en `specs/*.spec.yaml` (tensores del modelo, etiquetas, datos). **Hoy son
-documentación**: nada los valida automáticamente todavía (eso es justamente la feature 003). Ya hubo
-desvíos reales entre contrato y código.
+Además hay tres contratos en `specs/*.spec.yaml` (tensores del modelo, etiquetas, datos). El harness
+(`python -m harness contratos`) compara parte de sus campos contra el código en cada cambio y en CI; los
+campos que todavía no tienen verificador se informan como `sin_verificacion`. Ya hubo desvíos reales
+entre contrato y código, y por eso existe ese control.
 
 ## Limitaciones conocidas
 
@@ -236,7 +239,7 @@ desvíos reales entre contrato y código.
 
 1. Conseguir y procesar la anotación clínica (sano / no sano y patología) para las Etapas 1 y 2.
 2. Mejorar la Etapa 0: análisis de los errores concretos, aumentación de datos, descongelar un bloque más.
-3. Implementar el harness de la feature 003 (CI y validación de specs).
+3. Ampliar el harness: verificadores para los campos de contrato que hoy quedan `sin_verificacion`.
 4. Implementar la anonimización y configurar el versionado del dataset (DVC) antes de subir datos a la nube.
 5. Retro-especificar la demo web como feature aparte.
 

@@ -7,6 +7,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 VetVision AI: AI-assisted diagnosis for dog/cat X-rays. Two raw-data pipelines feed a
 three-stage cascade classifier (only stage 0 is implemented so far — see Architecture).
 
+Memoria compartida del proyecto (decisiones, convenciones, lecciones y estado; se mantiene en el
+repo y se carga en cada sesión): @docs/MEMORIA.md
+
 ## Commands
 
 ```bash
