@@ -194,3 +194,85 @@ cantidad de épocas ni los datos.
 aplanarse, es probable que unas pocas épocas más (o descongelar un bloque adicional) sigan dando
 mejora — pero ya no es necesario para cumplir el criterio de éxito definido. Queda como
 optimización opcional, no como bloqueante.
+
+**Nota agregada el 2026-11-17**: esta corrida partió entrenamiento y validación **al azar por
+imagen**. Al auditar el modelo se encontró que el 91,9 % de las imágenes de validación (1473 de
+1603) pertenecía a un paciente que también tenía imágenes en el conjunto de entrenamiento — ver
+Corrida 4. El 92,45 % de esta corrida queda documentado con esa salvedad; el checkpoint y el ONNX
+de esta corrida se conservan como `models/etapa0_region_c3.pt` / `.onnx`, ya no son los que usa la
+aplicación en producción.
+
+---
+
+## Corrida 4 — 2026-11-17 — misma configuración, partición por paciente (spec 007)
+
+**Contexto**: auditoría del modelo el 2026-11-17 encontró que las corridas 1 a 3 partieron
+entrenamiento y validación al azar **por imagen**, sin verificar que las distintas placas de un
+mismo paciente quedaran del mismo lado. En la Corrida 3, el 91,9 % de las imágenes de validación
+(1473 de 1603) correspondía a un paciente que también tenía imágenes en entrenamiento — el modelo
+podía estar reconociendo al paciente, no solo el patrón radiográfico, y la métrica podía estar
+inflada. Se especificó la corrección (`specs/007-evaluacion-modelo`, incremento 1):
+`src/particion.py` agrupa las placas por paciente (mismo identificador, sin el sufijo numérico) y
+garantiza que ningún grupo quede partido entre entrenamiento y validación.
+
+**Config** (idéntica a la Corrida 3; lo único que cambia es la partición):
+```bash
+python -m src.train --data-dir "C:\Users\Usuario\Music\DatasetVetVision" --epochs 15 --batch-size 8 --lr 1e-4 --unfreeze-layers denseblock4,norm5 --split paciente --seed 42 --model-path models\etapa0_region_c4_paciente.pt
+python -m src.evaluate --data-dir "C:\Users\Usuario\Music\DatasetVetVision" --model-path models\etapa0_region_c4_paciente.pt
+```
+
+**Dataset**: mismas 8015 imágenes. Partición por paciente, semilla 42: 6414 entrenamiento / 1601
+validación (2157 grupos de paciente en total; 0 grupos compartidos entre los dos lados — verificado
+antes de entrenar).
+
+**Resultado por época**:
+
+| Época | train_loss | val_loss | val_acc |
+|---|---|---|---|
+| 1 | 0.6123 | 0.5757 | 77.58% |
+| 2 | 0.4948 | 0.5397 | 81.89% |
+| 3 | 0.4334 | 0.5309 | 82.82% |
+| 4 | 0.3915 | 0.5203 | 82.57% |
+| 5 | 0.3614 | 0.4991 | 84.63% |
+| 6 | 0.3449 | 0.4640 | 84.26% |
+| 7 | 0.3283 | 0.4213 | 87.57% |
+| 8 | 0.3143 | 0.4116 | 89.38% |
+| 9 | 0.3055 | 0.4793 | 88.19% |
+| 10 | 0.2863 | 0.4455 | 91.19% |
+| 11 | 0.2776 | 0.4211 | 91.19% |
+| 12 | 0.2804 | 0.4359 | 91.07% |
+| 13 | 0.2578 | 0.4879 | **91.57%** |
+| 14 | 0.2651 | 0.4397 | 90.69% |
+| 15 | 0.2549 | 0.3817 | 91.07% |
+
+Mejor época: 13 (la que se guarda, no la última).
+
+**Resultado final** (`src/evaluate.py`, held-out real de 1601 imágenes, sin pacientes compartidos
+con entrenamiento):
+
+| Métrica | Corrida 3 (con fuga) | Corrida 4 (sin fuga) |
+|---|---|---|
+| accuracy | 92.70% | 91.57% |
+| **balanced_accuracy** | 92.45% | **91.45%** |
+| f1_macro | 92.63% | 91.53% |
+| **promovible a producción** | Sí (con la salvedad de la fuga) | **✅ Sí** (umbral: 90%) |
+
+**Duración real**: ~7 h 18 min (01:18 a 08:36), CPU, en segundo plano, con cortes y relanzamientos
+intermedios (ver nota de proceso). Evaluación: ~5 min.
+
+**Lectura de la tendencia**: el patrón es el mismo que en la Corrida 3 (mejora sostenida sin
+estancamiento ni señales claras de sobreajuste), con una curva algo más ruidosa época a época —
+esperable con una partición más chica por grupos en vez de por imagen individual.
+
+**Conclusión**: la caída de 92,45 % a 91,45 % (1 punto porcentual) muestra que la fuga por paciente
+inflaba la métrica de la Corrida 3, pero no de forma dramática: el modelo generaliza razonablemente
+bien a pacientes que nunca vio, y sigue por encima del umbral de promoción. **Esta es la métrica
+que se usa de ahora en adelante.** Se promovió este checkpoint a producción:
+`models/etapa0_region_c4_paciente.pt` se copió a `models/etapa0_region.pt` (y se reexportó a
+`models/etapa0_region.onnx`, usado por el MVP web); los artefactos de la Corrida 3 se conservan
+con el sufijo `_c3` para referencia, ya no son los que usa la aplicación.
+
+**Nota de proceso**: esta corrida se interrumpió una vez a pedido explícito (para reprogramarla a
+un horario sin otro trabajo en curso) y se relanzó completa desde cero minutos después; no quedó
+ningún archivo a medio escribir porque el mejor checkpoint se guarda en disco en cada mejora, no
+solo al final.

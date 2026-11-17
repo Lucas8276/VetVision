@@ -69,23 +69,34 @@
 - La planilla de diagnósticos de un año que no está en el dataset no sirve: antes de transcribir se
   verifica que el identificador exista en los datos.
 
-## Estado (2026-11-17)
+## Estado (2026-11-17, actualizado de madrugada)
 
 - Prompt de trabajo: `docs/PROMPT-FABLE.md`. Plan de cierre: `docs/PLAN-DE-CIERRE.md`.
-- **Etapa 0 entrenada** (Corrida 3, detalle en `ENTRENAMIENTOS.md`). Medición exploratoria del 2026-11-17
-  sobre el held-out de 1603 imágenes, a reproducir bajo el spec de evaluación: balanced accuracy 92,45 %
-  (IC 95 % por bootstrap: 91,2 a 93,7), ROC-AUC 0,955 (0,942 a 0,967), sensibilidad para TORAX 88,3 %,
-  especificidad 96,6 %, latencia de punta a punta en CPU con mediana de 0,14 s por imagen.
-- **Hallazgo abierto: fuga por paciente.** 1473 de las 1603 imágenes de validación (91,9 %) son de un
-  paciente que también tiene imágenes en entrenamiento. En las 130 imágenes de pacientes que solo están
-  en validación la balanced accuracy es 88,1 % (muestra chica, todavía sin intervalo). Falta
-  reparticionar por paciente y volver a medir; hasta entonces el 92,45 % se informa con esta salvedad.
+- **Fuga por paciente, resuelta.** La Corrida 3 partía entrenamiento y validación al azar por imagen:
+  91,9 % de la validación (1473 de 1603 imágenes) era de un paciente también presente en entrenamiento.
+  Se especificó la partición por paciente (`specs/007-evaluacion-modelo`, `src/particion.py`) y se
+  corrió de nuevo (Corrida 4, misma configuración, 0 grupos de paciente compartidos).
+- **Etapa 0, modelo oficial actualizado (Corrida 4).** Balanced accuracy **91,45 %** sobre 1601 imágenes
+  de validación sin ningún paciente compartido con entrenamiento (accuracy 91,57 %, F1 macro 91,53 %).
+  Sigue por encima del umbral de promoción (0,90). Es 1 punto menos que el 92,45 % de la Corrida 3: la
+  fuga inflaba la métrica, pero no de forma dramática. **Este es el checkpoint que usa la aplicación**
+  (`models/etapa0_region.pt`/`.onnx`); el de la Corrida 3 se conserva como `..._c3.*` para referencia.
+  Detalle completo en `ENTRENAMIENTOS.md`, Corrida 4.
+- Medición exploratoria adicional de la Corrida 3 (ya con la salvedad de la fuga, sin repetir todavía
+  sobre la Corrida 4): ROC-AUC 0,955, sensibilidad para TORAX 88,3 %, especificidad 96,6 %, latencia de
+  punta a punta en CPU con mediana de 0,14 s por imagen. `[PENDIENTE: repetir esta medición sobre la
+  Corrida 4]`.
 - **Dataset medido:** 8158 estudios, 8015 con imagen, años 2018 a 2026; 3796 imágenes de tórax
   (3415 caninas, 379 felinas, 2 sin dato de especie).
-- **Diagnósticos:** transcripción en curso (se hace por año). El cruce con las placas va por
-  identificador y fecha; la unidad de análisis es el estudio, no la imagen.
-- **Harness:** 61 tests; contratos con 11 campos `ok`, 4 secciones `pendiente` y 21 campos
-  `sin_verificacion`. CI en verde.
-- **Demo web local** (`server.py`): se reemplaza por el MVP de la feature `004-mvp-web` (en especificación).
-- **Pendientes:** MVP, Etapa 1 (según cantidad de diagnósticos), spec de evaluación, harness del
-  documento, anonimización, verificadores de contratos faltantes, Etapa 2 (necesita más anotación).
+- **Diagnósticos:** cruce real contra el dataset (2026-11-17): 111 filas etiquetables, 98 pacientes con
+  veredicto sano/no sano (28 normales, 70 no sanos) — Etapa 1 queda en carácter exploratorio por el
+  tamaño de muestra. Detalle agregado en `docs/privado/etiquetas/resumen_etiquetas.md` (privado).
+- **MVP web implementado** (`app/`, spec `004-mvp-web`): API con FastAPI, ONNX Runtime y SQLite, 59
+  tests, incluida la paridad real ONNX↔PyTorch. Reemplaza a la demo de una sola pantalla (`server.py`,
+  en retiro). `python -m app` lo levanta con un solo comando.
+- **Harness:** 158 tests; contratos con 12 campos `ok`, 4 secciones `pendiente` y 21 campos
+  `sin_verificacion`. Nuevo subcomando `python -m harness documento` (verifica el documento de entrega:
+  hechos, citas, datos personales, descargo, revisión humana). CI en verde.
+- **Pendientes:** Etapa 1 (con el N real, exploratoria), spec de evaluación completo (incremento 2),
+  anonimización, verificadores de contratos faltantes, Etapa 2 (necesita más anotación), revisión
+  humana de los capítulos del documento reescritos esta madrugada.
