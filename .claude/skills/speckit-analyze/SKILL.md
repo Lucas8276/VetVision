@@ -1,8 +1,8 @@
 ---
 name: "speckit-analyze"
-description: "Perform a non-destructive cross-artifact consistency and quality analysis across spec.md, plan.md, and tasks.md after task generation."
-argument-hint: "Optional focus areas for analysis"
-compatibility: "Requires spec-kit project structure with .specify/ directory"
+description: "Realiza un análisis no destructivo de consistencia y calidad entre artefactos sobre spec.md, plan.md y tasks.md, después de generar las tareas."
+argument-hint: "Áreas de enfoque opcionales para el análisis"
+compatibility: "Requiere la estructura de proyecto de spec-kit con el directorio .specify/"
 metadata:
   author: "github-spec-kit"
   source: "templates/commands/analyze.md"
@@ -11,252 +11,254 @@ disable-model-invocation: false
 ---
 
 
-## User Input
+## Entrada del usuario
 
 ```text
 $ARGUMENTS
 ```
 
-You **MUST** consider the user input before proceeding (if not empty).
+**DEBES** considerar la entrada del usuario antes de continuar (si no está vacía).
 
-## Pre-Execution Checks
+## Verificaciones previas a la ejecución
 
-**Check for extension hooks (before analysis)**:
-- Check if `.specify/extensions.yml` exists in the project root.
-- If it exists, read it and look for entries under the `hooks.before_analyze` key
-- If the YAML cannot be parsed or is invalid, do not skip silently: tell the user that `.specify/extensions.yml` could not be read (include the parser error) and that no hooks were checked, including any mandatory (`optional: false`) hooks registered there, then continue normally
-- Filter out hooks where `enabled` is explicitly `false`. Treat hooks without an `enabled` field as enabled by default.
-- For each remaining hook, do **not** attempt to interpret or evaluate hook `condition` expressions:
-  - If the hook has no `condition` field, or it is null/empty, treat the hook as executable
-  - If the hook defines a non-empty `condition`, skip the hook and leave condition evaluation to the HookExecutor implementation
-- When constructing command invocations from hook command names, replace dots (`.`) with hyphens (`-`). For example, `speckit.git.commit` → `/speckit-git-commit`.
-- For each executable hook, output the following based on its `optional` flag:
-  - **Optional hook** (`optional: true`):
+**Buscar hooks de extensión (antes del análisis)**:
+- Verificá si existe `.specify/extensions.yml` en la raíz del proyecto.
+- Si existe, leelo y buscá las entradas bajo la clave `hooks.before_analyze`
+- Si el YAML no se puede parsear o no es válido, no lo omitas en silencio: avisale al usuario que no se pudo leer `.specify/extensions.yml` (incluí el error del parser) y que no se verificó ningún hook, incluidos los obligatorios (`optional: false`) registrados ahí, y luego continuá normalmente
+- Descartá los hooks cuyo campo `enabled` sea explícitamente `false`. Los hooks sin campo `enabled` se consideran habilitados por defecto.
+- Para cada hook restante, **no** intentes interpretar ni evaluar las expresiones del campo `condition`:
+  - Si el hook no tiene campo `condition`, o es nulo/vacío, tratá el hook como ejecutable
+  - Si el hook define un `condition` no vacío, omití el hook y dejá la evaluación de la condición a la implementación de HookExecutor
+- Al armar las invocaciones de comandos a partir de los nombres de comando de los hooks, reemplazá los puntos (`.`) por guiones (`-`). Por ejemplo, `speckit.git.commit` → `/speckit-git-commit`.
+- Para cada hook ejecutable, emití lo siguiente según su indicador `optional`:
+  - **Hook opcional** (`optional: true`):
     ```
-    ## Extension Hooks
+    ## Hooks de extensión
 
-    **Optional Pre-Hook**: {extension}
-    Command: `/{command}`
-    Description: {description}
+    **Pre-hook opcional**: {extension}
+    Comando: `/{command}`
+    Descripción: {description}
 
     Prompt: {prompt}
-    To execute: `/{command}`
+    Para ejecutarlo: `/{command}`
     ```
-  - **Mandatory hook** (`optional: false`):
+  - **Hook obligatorio** (`optional: false`):
     ```
-    ## Extension Hooks
+    ## Hooks de extensión
 
-    **Automatic Pre-Hook**: {extension}
-    Executing: `/{command}`
+    **Pre-hook automático**: {extension}
+    Ejecutando: `/{command}`
     EXECUTE_COMMAND: {command}
 
-    Wait for the result of the hook command before proceeding to the Goal.
+    Esperá el resultado del comando del hook antes de continuar con el Objetivo.
     ```
-    After emitting the block above you MUST actually invoke the hook and wait for it to finish before continuing. Run it the same way you would run the command yourself in this agent/session (the invocation may differ from the literal `{command}` id shown above, e.g. a skills-mode agent runs it as `/skill:speckit-...` or `$speckit-...`). Emitting the block alone does not run the hook.
-- If no hooks are registered or `.specify/extensions.yml` does not exist, skip silently
+    Después de emitir el bloque anterior DEBES invocar realmente el hook y esperar a que termine antes de continuar. Ejecutalo de la misma forma en que ejecutarías el comando vos mismo en este agente/sesión (la invocación puede diferir del id literal `{command}` mostrado arriba; por ejemplo, un agente en modo skills lo ejecuta como `/skill:speckit-...` o `$speckit-...`). Emitir el bloque por sí solo no ejecuta el hook.
+- Si no hay hooks registrados o no existe `.specify/extensions.yml`, omití este paso en silencio
 
-## Goal
 
-Identify inconsistencies, duplications, ambiguities, and underspecified items across the three core artifacts (`spec.md`, `plan.md`, `tasks.md`) before implementation. This command MUST run only after `/speckit-tasks` has successfully produced a complete `tasks.md`.
+## Objetivo
 
-## Operating Constraints
+Identificar inconsistencias, duplicaciones, ambigüedades y elementos subespecificados entre los tres artefactos centrales (`spec.md`, `plan.md`, `tasks.md`) antes de la implementación. Este comando DEBE ejecutarse únicamente después de que `/speckit-tasks` haya producido con éxito un `tasks.md` completo.
 
-**STRICTLY READ-ONLY**: Do **not** modify any files. Output a structured analysis report. Offer an optional remediation plan (user must explicitly approve before any follow-up editing commands would be invoked manually).
+## Restricciones de operación
 
-**Constitution Authority**: The project constitution (`.specify/memory/constitution.md`) is **non-negotiable** within this analysis scope. Constitution conflicts are automatically CRITICAL and require adjustment of the spec, plan, or tasks—not dilution, reinterpretation, or silent ignoring of the principle. If a principle itself needs to change, that must occur in a separate, explicit constitution update outside `/speckit-analyze`.
+**ESTRICTAMENTE DE SOLO LECTURA**: **No** modifiques ningún archivo. Mostrá un informe de análisis estructurado. Ofrecé un plan de remediación opcional (el usuario debe aprobarlo de forma explícita antes de que se invoque manualmente cualquier comando de edición posterior).
 
-## Execution Steps
+**Autoridad de la constitution**: La constitution del proyecto (`.specify/memory/constitution.md`) es **innegociable** dentro del alcance de este análisis. Los conflictos con la constitution son automáticamente CRÍTICOS y exigen ajustar la spec, el plan o las tareas, no diluir, reinterpretar ni ignorar en silencio el principio. Si un principio en sí necesita cambiar, eso debe hacerse en una actualización de la constitution separada y explícita, fuera de `/speckit-analyze`.
 
-### 1. Initialize Analysis Context
+## Pasos de ejecución
 
-Run `.specify/scripts/powershell/check-prerequisites.ps1 -Json -RequireSpec -RequireTasks -IncludeTasks` once from repo root and parse JSON for FEATURE_DIR and AVAILABLE_DOCS. Derive absolute paths:
+### 1. Inicializar el contexto del análisis
+
+Ejecutá `.specify/scripts/powershell/check-prerequisites.ps1 -Json -RequireSpec -RequireTasks -IncludeTasks` una vez desde la raíz del repositorio y parseá el JSON para obtener FEATURE_DIR y AVAILABLE_DOCS. Derivá las rutas absolutas:
 
 - SPEC = FEATURE_DIR/spec.md
 - PLAN = FEATURE_DIR/plan.md
 - TASKS = FEATURE_DIR/tasks.md
 
-Abort with an error message if any required file is missing (instruct the user to run missing prerequisite command).
-For single quotes in args like "I'm Groot", use escape syntax: e.g 'I'\''m Groot' (or double-quote if possible: "I'm Groot").
+Abortá con un mensaje de error si falta algún archivo requerido (indicale al usuario que ejecute el comando prerrequisito que falta).
+Para las comillas simples en los argumentos, como "I'm Groot", usá la sintaxis de escape: p. ej. 'I'\''m Groot' (o comillas dobles si es posible: "I'm Groot").
 
-### 2. Load Artifacts (Progressive Disclosure)
+### 2. Cargar los artefactos (divulgación progresiva)
 
-Load only the minimal necessary context from each artifact:
+Cargá solo el contexto mínimo necesario de cada artefacto:
 
-**From spec.md:**
+**De spec.md:**
 
-- Overview/Context
-- Functional Requirements
-- Success Criteria (measurable outcomes — e.g., performance, security, availability, user success, business impact)
-- User Stories
-- Edge Cases (if present)
+- Resumen/Contexto
+- Requisitos funcionales
+- Criterios de éxito (resultados medibles, p. ej.: rendimiento, seguridad, disponibilidad, éxito del usuario, impacto en el negocio)
+- Historias de usuario
+- Casos límite (si los hay)
 
-**From plan.md:**
+**De plan.md:**
 
-- Architecture/stack choices
-- Data Model references
-- Phases
-- Technical constraints
+- Elecciones de arquitectura/stack
+- Referencias al modelo de datos
+- Fases
+- Restricciones técnicas
 
-**From tasks.md:**
+**De tasks.md:**
 
-- Task IDs
-- Descriptions
-- Phase grouping
-- Parallel markers [P]
-- Referenced file paths
+- IDs de tarea
+- Descripciones
+- Agrupación por fase
+- Marcadores de paralelismo [P]
+- Rutas de archivo referenciadas
 
-**From constitution:**
+**De la constitution:**
 
-- Load `.specify/memory/constitution.md` for principle validation
+- Cargá `.specify/memory/constitution.md` para validar los principios
 
-### 3. Build Semantic Models
+### 3. Construir modelos semánticos
 
-Create internal representations (do not include raw artifacts in output):
+Creá representaciones internas (no incluyas los artefactos crudos en la salida):
 
-- **Requirements inventory**: For each Functional Requirement (FR-###) and Success Criterion (SC-###), record a stable key. Use the explicit FR-/SC- identifier as the primary key when present, and optionally also derive an imperative-phrase slug for readability (e.g., "User can upload file" → `user-can-upload-file`). Include only Success Criteria items that require buildable work (e.g., load-testing infrastructure, security audit tooling), and exclude post-launch outcome metrics and business KPIs (e.g., "Reduce support tickets by 50%").
-- **User story/action inventory**: Discrete user actions with acceptance criteria
-- **Task coverage mapping**: Map each task to one or more requirements or stories (inference by keyword / explicit reference patterns like IDs or key phrases)
-- **Constitution rule set**: Extract principle names and MUST/SHOULD normative statements
+- **Inventario de requisitos**: Por cada requisito funcional (FR-###) y criterio de éxito (SC-###), registrá una clave estable. Usá el identificador explícito FR-/SC- como clave principal cuando exista y, opcionalmente, derivá también un slug en frase imperativa para facilitar la lectura (p. ej., "El usuario puede subir un archivo" → `user-can-upload-file`). Incluí solo los criterios de éxito que requieren trabajo construible (p. ej., infraestructura de pruebas de carga, herramientas de auditoría de seguridad) y excluí las métricas de resultado posteriores al lanzamiento y los KPI de negocio (p. ej., "Reducir los tickets de soporte en un 50 %").
+- **Inventario de historias/acciones de usuario**: Acciones discretas del usuario con sus criterios de aceptación
+- **Mapa de cobertura de tareas**: Asigná cada tarea a uno o más requisitos o historias (inferencia por palabras clave / patrones de referencia explícita como IDs o frases clave)
+- **Conjunto de reglas de la constitution**: Extraé los nombres de los principios y las declaraciones normativas DEBE/DEBERÍA
 
-### 4. Detection Passes (Token-Efficient Analysis)
+### 4. Pasadas de detección (análisis eficiente en tokens)
 
-Focus on high-signal findings. Limit to 50 findings total; aggregate remainder in overflow summary.
+Concentrate en hallazgos de alta señal. Limitá el total a 50 hallazgos; agregá el resto en un resumen de excedente.
 
-#### A. Duplication Detection
+#### A. Detección de duplicación
 
-- Identify near-duplicate requirements
-- Mark lower-quality phrasing for consolidation
+- Identificá requisitos casi duplicados
+- Marcá la redacción de menor calidad para consolidarla
 
-#### B. Ambiguity Detection
+#### B. Detección de ambigüedad
 
-- Flag vague adjectives (fast, scalable, secure, intuitive, robust) lacking measurable criteria
-- Flag unresolved placeholders (TODO, TKTK, ???, `<placeholder>`, etc.)
+- Marcá adjetivos vagos (rápido, escalable, seguro, intuitivo, robusto) que carezcan de criterios medibles
+- Marcá marcadores de posición sin resolver (TODO, TKTK, ???, `<placeholder>`, etc.)
 
-#### C. Underspecification
+#### C. Subespecificación
 
-- Requirements with verbs but missing object or measurable outcome
-- User stories missing acceptance criteria alignment
-- Tasks referencing files or components not defined in spec/plan
+- Requisitos con verbos pero sin objeto o sin resultado medible
+- Historias de usuario sin alineación con criterios de aceptación
+- Tareas que referencian archivos o componentes no definidos en la spec/plan
 
-#### D. Constitution Alignment
+#### D. Alineación con la constitution
 
-- Any requirement or plan element conflicting with a MUST principle
-- Missing mandated sections or quality gates from constitution
+- Cualquier requisito o elemento del plan que entre en conflicto con un principio DEBE
+- Secciones obligatorias o puertas de calidad de la constitution que faltan
 
-#### E. Coverage Gaps
+#### E. Brechas de cobertura
 
-- Requirements with zero associated tasks
-- Tasks with no mapped requirement/story
-- Success Criteria requiring buildable work (performance, security, availability) not reflected in tasks
+- Requisitos con cero tareas asociadas
+- Tareas sin requisito/historia asignado
+- Criterios de éxito que requieren trabajo construible (rendimiento, seguridad, disponibilidad) y no están reflejados en las tareas
 
-#### F. Inconsistency
+#### F. Inconsistencia
 
-- Terminology drift (same concept named differently across files)
-- Data entities referenced in plan but absent in spec (or vice versa)
-- Task ordering contradictions (e.g., integration tasks before foundational setup tasks without dependency note)
-- Conflicting requirements (e.g., one requires Next.js while other specifies Vue)
+- Deriva terminológica (el mismo concepto con nombres distintos en distintos archivos)
+- Entidades de datos referenciadas en el plan pero ausentes en la spec (o viceversa)
+- Contradicciones en el orden de las tareas (p. ej., tareas de integración antes que las de preparación de fundamentos, sin nota de dependencia)
+- Requisitos en conflicto (p. ej., uno exige Next.js y otro especifica Vue)
 
-### 5. Severity Assignment
+### 5. Asignación de severidad
 
-Use this heuristic to prioritize findings:
+Usá esta heurística para priorizar los hallazgos:
 
-- **CRITICAL**: Violates constitution MUST, missing core spec artifact, or requirement with zero coverage that blocks baseline functionality
-- **HIGH**: Duplicate or conflicting requirement, ambiguous security/performance attribute, untestable acceptance criterion
-- **MEDIUM**: Terminology drift, missing non-functional task coverage, underspecified edge case
-- **LOW**: Style/wording improvements, minor redundancy not affecting execution order
+- **CRÍTICO**: Viola un DEBE de la constitution, falta un artefacto central de la spec, o hay un requisito con cero cobertura que bloquea la funcionalidad base
+- **ALTO**: Requisito duplicado o en conflicto, atributo de seguridad/rendimiento ambiguo, criterio de aceptación no verificable
+- **MEDIO**: Deriva terminológica, falta cobertura de tareas no funcionales, caso límite subespecificado
+- **BAJO**: Mejoras de estilo/redacción, redundancia menor que no afecta el orden de ejecución
 
-### 6. Produce Compact Analysis Report
+### 6. Producir un informe de análisis compacto
 
-Output a Markdown report (no file writes) with the following structure:
+Mostrá un informe en Markdown (sin escribir archivos) con la siguiente estructura:
 
-## Specification Analysis Report
+## Informe de análisis de la especificación
 
-| ID | Category | Severity | Location(s) | Summary | Recommendation |
-|----|----------|----------|-------------|---------|----------------|
-| A1 | Duplication | HIGH | spec.md:L120-134 | Two similar requirements ... | Merge phrasing; keep clearer version |
+| ID | Categoría | Severidad | Ubicación(es) | Resumen | Recomendación |
+|----|-----------|-----------|---------------|---------|---------------|
+| A1 | Duplicación | ALTO | spec.md:L120-134 | Dos requisitos similares ... | Unificar la redacción; conservar la versión más clara |
 
-(Add one row per finding; generate stable IDs prefixed by category initial.)
+(Agregá una fila por hallazgo; generá IDs estables con el prefijo de la inicial de la categoría.)
 
-**Coverage Summary Table:**
+**Tabla de resumen de cobertura:**
 
-| Requirement Key | Has Task? | Task IDs | Notes |
-|-----------------|-----------|----------|-------|
+| Clave del requisito | ¿Tiene tarea? | IDs de tarea | Notas |
+|---------------------|---------------|--------------|-------|
 
-**Constitution Alignment Issues:** (if any)
+**Problemas de alineación con la constitution:** (si los hay)
 
-**Unmapped Tasks:** (if any)
+**Tareas sin mapear:** (si las hay)
 
-**Metrics:**
+**Métricas:**
 
-- Total Requirements
-- Total Tasks
-- Coverage % (requirements with >=1 task)
-- Ambiguity Count
-- Duplication Count
-- Critical Issues Count
+- Total de requisitos
+- Total de tareas
+- % de cobertura (requisitos con >=1 tarea)
+- Cantidad de ambigüedades
+- Cantidad de duplicaciones
+- Cantidad de problemas críticos
 
-### 7. Provide Next Actions
+### 7. Indicar las próximas acciones
 
-At end of report, output a concise Next Actions block:
+Al final del informe, mostrá un bloque conciso de Próximas acciones:
 
-- If CRITICAL issues exist: Recommend resolving before `/speckit-implement`
-- If only LOW/MEDIUM: User may proceed, but provide improvement suggestions
-- Provide explicit command suggestions: e.g., "Run /speckit-specify with refinement", "Run /speckit-plan to adjust architecture", "Manually edit tasks.md to add coverage for 'performance-metrics'"
+- Si existen problemas CRÍTICOS: recomendá resolverlos antes de `/speckit-implement`
+- Si solo hay BAJOS/MEDIOS: el usuario puede continuar, pero dá sugerencias de mejora
+- Dá sugerencias explícitas de comandos: p. ej., "Ejecutá /speckit-specify con un refinamiento", "Ejecutá /speckit-plan para ajustar la arquitectura", "Editá manualmente tasks.md para agregar cobertura de 'performance-metrics'"
 
-### 8. Offer Remediation
+### 8. Ofrecer remediación
 
-Ask the user: "Would you like me to suggest concrete remediation edits for the top N issues?" (Do NOT apply them automatically.)
+Preguntale al usuario: "¿Querés que sugiera ediciones concretas de remediación para los N problemas principales?" (NO las apliques automáticamente.)
 
-### 9. Check for extension hooks
+### 9. Buscar hooks de extensión
 
-After reporting, check if `.specify/extensions.yml` exists in the project root.
-- If it exists, read it and look for entries under the `hooks.after_analyze` key
-- If the YAML cannot be parsed or is invalid, do not skip silently: tell the user that `.specify/extensions.yml` could not be read (include the parser error) and that no hooks were checked, including any mandatory (`optional: false`) hooks registered there, then continue normally
-- Filter out hooks where `enabled` is explicitly `false`. Treat hooks without an `enabled` field as enabled by default.
-- For each remaining hook, do **not** attempt to interpret or evaluate hook `condition` expressions:
-  - If the hook has no `condition` field, or it is null/empty, treat the hook as executable
-  - If the hook defines a non-empty `condition`, skip the hook and leave condition evaluation to the HookExecutor implementation
-- When constructing command invocations from hook command names, replace dots (`.`) with hyphens (`-`). For example, `speckit.git.commit` → `/speckit-git-commit`.
-- For each executable hook, output the following based on its `optional` flag:
-  - **Optional hook** (`optional: true`):
+Después de informar, verificá si existe `.specify/extensions.yml` en la raíz del proyecto.
+- Si existe, leelo y buscá las entradas bajo la clave `hooks.after_analyze`
+- Si el YAML no se puede parsear o no es válido, no lo omitas en silencio: avisale al usuario que no se pudo leer `.specify/extensions.yml` (incluí el error del parser) y que no se verificó ningún hook, incluidos los obligatorios (`optional: false`) registrados ahí, y luego continuá normalmente
+- Descartá los hooks cuyo campo `enabled` sea explícitamente `false`. Los hooks sin campo `enabled` se consideran habilitados por defecto.
+- Para cada hook restante, **no** intentes interpretar ni evaluar las expresiones del campo `condition`:
+  - Si el hook no tiene campo `condition`, o es nulo/vacío, tratá el hook como ejecutable
+  - Si el hook define un `condition` no vacío, omití el hook y dejá la evaluación de la condición a la implementación de HookExecutor
+- Al armar las invocaciones de comandos a partir de los nombres de comando de los hooks, reemplazá los puntos (`.`) por guiones (`-`). Por ejemplo, `speckit.git.commit` → `/speckit-git-commit`.
+- Para cada hook ejecutable, emití lo siguiente según su indicador `optional`:
+  - **Hook opcional** (`optional: true`):
     ```
-    ## Extension Hooks
+    ## Hooks de extensión
 
-    **Optional Hook**: {extension}
-    Command: `/{command}`
-    Description: {description}
+    **Hook opcional**: {extension}
+    Comando: `/{command}`
+    Descripción: {description}
 
     Prompt: {prompt}
-    To execute: `/{command}`
+    Para ejecutarlo: `/{command}`
     ```
-  - **Mandatory hook** (`optional: false`):
+  - **Hook obligatorio** (`optional: false`):
     ```
-    ## Extension Hooks
+    ## Hooks de extensión
 
-    **Automatic Hook**: {extension}
-    Executing: `/{command}`
+    **Hook automático**: {extension}
+    Ejecutando: `/{command}`
     EXECUTE_COMMAND: {command}
     ```
-    After emitting the block above you MUST actually invoke the hook and wait for it to finish before continuing. Run it the same way you would run the command yourself in this agent/session (the invocation may differ from the literal `{command}` id shown above, e.g. a skills-mode agent runs it as `/skill:speckit-...` or `$speckit-...`). Emitting the block alone does not run the hook.
-- If no hooks are registered or `.specify/extensions.yml` does not exist, skip silently
+    Después de emitir el bloque anterior DEBES invocar realmente el hook y esperar a que termine antes de continuar. Ejecutalo de la misma forma en que ejecutarías el comando vos mismo en este agente/sesión (la invocación puede diferir del id literal `{command}` mostrado arriba; por ejemplo, un agente en modo skills lo ejecuta como `/skill:speckit-...` o `$speckit-...`). Emitir el bloque por sí solo no ejecuta el hook.
+- Si no hay hooks registrados o no existe `.specify/extensions.yml`, omití este paso en silencio
 
-## Operating Principles
 
-### Context Efficiency
+## Principios de operación
 
-- **Minimal high-signal tokens**: Focus on actionable findings, not exhaustive documentation
-- **Progressive disclosure**: Load artifacts incrementally; don't dump all content into analysis
-- **Token-efficient output**: Limit findings table to 50 rows; summarize overflow
-- **Deterministic results**: Rerunning without changes should produce consistent IDs and counts
+### Eficiencia de contexto
 
-### Analysis Guidelines
+- **Mínimos tokens de alta señal**: Concentrate en hallazgos accionables, no en documentación exhaustiva
+- **Divulgación progresiva**: Cargá los artefactos de forma incremental; no vuelques todo el contenido en el análisis
+- **Salida eficiente en tokens**: Limitá la tabla de hallazgos a 50 filas; resumí el excedente
+- **Resultados deterministas**: Volver a ejecutar sin cambios debe producir IDs y conteos consistentes
 
-- **NEVER modify files** (this is read-only analysis)
-- **NEVER hallucinate missing sections** (if absent, report them accurately)
-- **Prioritize constitution violations** (these are always CRITICAL)
-- **Use examples over exhaustive rules** (cite specific instances, not generic patterns)
-- **Report zero issues gracefully** (emit success report with coverage statistics)
+### Pautas de análisis
 
-## Context
+- **NUNCA modifiques archivos** (es un análisis de solo lectura)
+- **NUNCA inventes secciones faltantes** (si faltan, informalo con exactitud)
+- **Priorizá las violaciones de la constitution** (siempre son CRÍTICAS)
+- **Usá ejemplos en lugar de reglas exhaustivas** (citá casos concretos, no patrones genéricos)
+- **Informá con naturalidad cuando no haya problemas** (emití un informe de éxito con estadísticas de cobertura)
+
+## Contexto
 
 $ARGUMENTS

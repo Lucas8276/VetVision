@@ -1,24 +1,24 @@
 schema_version: "1.0"
 workflow:
   id: "speckit"
-  name: "Full SDD Cycle"
+  name: "Ciclo SDD completo"
   version: "1.0.1"
   author: "GitHub"
-  description: "Runs specify → plan → tasks → implement with review gates"
+  description: "Ejecuta specify → plan → tasks → implement con puertas de revisión"
 
 requires:
-  # 0.8.5 is the first release with engine-side resolution of the
-  # ``integration: "auto"`` default. Older versions would treat "auto"
-  # as a literal integration key and fail at dispatch.
+  # 0.8.5 es la primera versión que resuelve del lado del motor el valor por defecto
+  # ``integration: "auto"``. Las versiones anteriores tratarían "auto"
+  # como una clave de integración literal y fallarían al despachar.
   speckit_version: ">=0.8.5"
   integrations:
-    # The four commands below (specify, plan, tasks, implement) are core
-    # spec-kit commands provided by every integration. The list here is an
-    # advisory, non-exhaustive compatibility hint following the documented
-    # ``any: [...]`` schema -- it is NOT a closed set. The workflow runs
-    # against any integration the project was initialized with, including
-    # ones not listed below, as long as that integration provides the four
-    # core commands referenced in ``steps``.
+    # Los cuatro comandos de abajo (specify, plan, tasks, implement) son comandos
+    # centrales de spec-kit que ofrece toda integración. La lista de acá es una
+    # pista de compatibilidad orientativa y no exhaustiva, según el esquema
+    # documentado ``any: [...]``: NO es un conjunto cerrado. El workflow corre
+    # con cualquier integración con la que se haya inicializado el proyecto, incluso
+    # las que no figuran abajo, siempre que esa integración ofrezca los cuatro
+    # comandos centrales a los que hace referencia ``steps``.
     any:
       - "alquimia"
       - "claude"
@@ -30,11 +30,11 @@ inputs:
   spec:
     type: string
     required: true
-    prompt: "Describe what you want to build"
+    prompt: "Describí lo que querés construir"
   integration:
     type: string
     default: "auto"
-    prompt: "Integration to use (e.g. claude, copilot, gemini; 'auto' uses the project's initialized integration)"
+    prompt: "Integración a usar (ej.: claude, copilot, gemini; 'auto' usa la integración con la que se inicializó el proyecto)"
 
 steps:
   - id: specify
@@ -45,7 +45,7 @@ steps:
 
   - id: review-spec
     type: gate
-    message: "Review the generated spec before planning."
+    message: "Revisá la spec generada antes de planificar."
     options: [approve, reject]
     on_reject: abort
 
@@ -57,7 +57,7 @@ steps:
 
   - id: review-plan
     type: gate
-    message: "Review the plan before generating tasks."
+    message: "Revisá el plan antes de generar las tareas."
     options: [approve, reject]
     on_reject: abort
 

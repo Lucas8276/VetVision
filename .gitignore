@@ -20,3 +20,8 @@ NOTAS-SPECKIT.md
 .claude/*
 !.claude/skills/
 !.claude/settings.json
+
+# Material privado de la entrega (modelo de negocio, finanzas, guias de la universidad): no se versiona
+docs/privado/
+docs/*.pdf
+docs/*.docx

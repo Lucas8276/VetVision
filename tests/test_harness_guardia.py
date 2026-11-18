@@ -59,6 +59,12 @@ def test_contacto_solo_en_docs_memoria():
     assert "R-CONTACTO" not in reglas(texto, "otro.md")
 
 
+def test_contacto_no_confunde_fechas_con_telefonos():
+    assert "R-CONTACTO" not in reglas("Entrega: 2026-11-18, estado al 2026-11-16", "docs/MEMORIA.md")
+    telefono = "llamar al " + "+54 " + "379 " + "4123456"
+    assert "R-CONTACTO" in reglas(telefono, "docs/MEMORIA.md")
+
+
 def _repo(tmp_path):
     subprocess.run(["git", "init", "-q"], cwd=tmp_path, check=True)
     subprocess.run(["git", "config", "user.email", "t@t"], cwd=tmp_path, check=True)

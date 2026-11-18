@@ -1,8 +1,8 @@
 ---
 name: "speckit-taskstoissues"
-description: "Convert existing tasks into actionable, dependency-ordered GitHub issues for the feature based on available design artifacts."
-argument-hint: "Optional filter or label for GitHub issues"
-compatibility: "Requires spec-kit project structure with .specify/ directory"
+description: "Convierte las tareas existentes en issues de GitHub accionables y ordenados por dependencias para la funcionalidad, a partir de los artefactos de diseño disponibles."
+argument-hint: "Filtro o etiqueta opcional para los issues de GitHub"
+compatibility: "Requiere la estructura de proyecto de spec-kit con el directorio .specify/"
 metadata:
   author: "github-spec-kit"
   source: "templates/commands/taskstoissues.md"
@@ -11,102 +11,102 @@ disable-model-invocation: false
 ---
 
 
-## User Input
+## Entrada del usuario
 
 ```text
 $ARGUMENTS
 ```
 
-You **MUST** consider the user input before proceeding (if not empty).
+**DEBES** considerar la entrada del usuario antes de continuar (si no está vacía).
 
-## Pre-Execution Checks
+## Verificaciones previas a la ejecución
 
-**Check for extension hooks (before tasks-to-issues conversion)**:
-- Check if `.specify/extensions.yml` exists in the project root.
-- If it exists, read it and look for entries under the `hooks.before_taskstoissues` key
-- If the YAML cannot be parsed or is invalid, do not skip silently: tell the user that `.specify/extensions.yml` could not be read (include the parser error) and that no hooks were checked, including any mandatory (`optional: false`) hooks registered there, then continue normally
-- Filter out hooks where `enabled` is explicitly `false`. Treat hooks without an `enabled` field as enabled by default.
-- For each remaining hook, do **not** attempt to interpret or evaluate hook `condition` expressions:
-  - If the hook has no `condition` field, or it is null/empty, treat the hook as executable
-  - If the hook defines a non-empty `condition`, skip the hook and leave condition evaluation to the HookExecutor implementation
-- When constructing command invocations from hook command names, replace dots (`.`) with hyphens (`-`). For example, `speckit.git.commit` → `/speckit-git-commit`.
-- For each executable hook, output the following based on its `optional` flag:
-  - **Optional hook** (`optional: true`):
+**Buscar hooks de extensión (antes de la conversión de tareas a issues)**:
+- Verificá si existe `.specify/extensions.yml` en la raíz del proyecto.
+- Si existe, leelo y buscá las entradas bajo la clave `hooks.before_taskstoissues`
+- Si el YAML no se puede parsear o no es válido, no lo omitas en silencio: avisale al usuario que no se pudo leer `.specify/extensions.yml` (incluí el error del parser) y que no se verificó ningún hook, incluidos los obligatorios (`optional: false`) registrados ahí, y luego continuá normalmente
+- Descartá los hooks cuyo campo `enabled` sea explícitamente `false`. Los hooks sin campo `enabled` se consideran habilitados por defecto.
+- Para cada hook restante, **no** intentes interpretar ni evaluar las expresiones del campo `condition`:
+  - Si el hook no tiene campo `condition`, o es nulo/vacío, tratá el hook como ejecutable
+  - Si el hook define un `condition` no vacío, omití el hook y dejá la evaluación de la condición a la implementación de HookExecutor
+- Al armar las invocaciones de comandos a partir de los nombres de comando de los hooks, reemplazá los puntos (`.`) por guiones (`-`). Por ejemplo, `speckit.git.commit` → `/speckit-git-commit`.
+- Para cada hook ejecutable, emití lo siguiente según su indicador `optional`:
+  - **Hook opcional** (`optional: true`):
     ```
-    ## Extension Hooks
+    ## Hooks de extensión
 
-    **Optional Pre-Hook**: {extension}
-    Command: `/{command}`
-    Description: {description}
+    **Pre-hook opcional**: {extension}
+    Comando: `/{command}`
+    Descripción: {description}
 
     Prompt: {prompt}
-    To execute: `/{command}`
+    Para ejecutarlo: `/{command}`
     ```
-  - **Mandatory hook** (`optional: false`):
+  - **Hook obligatorio** (`optional: false`):
     ```
-    ## Extension Hooks
+    ## Hooks de extensión
 
-    **Automatic Pre-Hook**: {extension}
-    Executing: `/{command}`
+    **Pre-hook automático**: {extension}
+    Ejecutando: `/{command}`
     EXECUTE_COMMAND: {command}
 
-    Wait for the result of the hook command before proceeding to the Outline.
+    Esperá el resultado del comando del hook antes de continuar con el Esquema.
     ```
-    After emitting the block above you MUST actually invoke the hook and wait for it to finish before continuing. Run it the same way you would run the command yourself in this agent/session (the invocation may differ from the literal `{command}` id shown above, e.g. a skills-mode agent runs it as `/skill:speckit-...` or `$speckit-...`). Emitting the block alone does not run the hook.
-- If no hooks are registered or `.specify/extensions.yml` does not exist, skip silently
+    Después de emitir el bloque anterior DEBES invocar realmente el hook y esperar a que termine antes de continuar. Ejecutalo de la misma forma en que ejecutarías el comando vos mismo en este agente/sesión (la invocación puede diferir del id literal `{command}` mostrado arriba; por ejemplo, un agente en modo skills lo ejecuta como `/skill:speckit-...` o `$speckit-...`). Emitir el bloque por sí solo no ejecuta el hook.
+- Si no hay hooks registrados o no existe `.specify/extensions.yml`, omití este paso en silencio
 
-## Outline
+## Esquema
 
-1. Run `.specify/scripts/powershell/check-prerequisites.ps1 -Json -RequireTasks -IncludeTasks` from repo root and parse FEATURE_DIR and AVAILABLE_DOCS list. All paths must be absolute. For single quotes in args like "I'm Groot", use escape syntax: e.g 'I'\''m Groot' (or double-quote if possible: "I'm Groot").
-1. **IF EXISTS**: Load `.specify/memory/constitution.md` for project principles and governance constraints.
-1. From the executed script, extract the path to **tasks**.
-1. Get the Git remote by running:
+1. Ejecutá `.specify/scripts/powershell/check-prerequisites.ps1 -Json -RequireTasks -IncludeTasks` desde la raíz del repositorio y parseá FEATURE_DIR y la lista AVAILABLE_DOCS. Todas las rutas deben ser absolutas. Para las comillas simples en los argumentos, como "I'm Groot", usá la sintaxis de escape: p. ej. 'I'\''m Groot' (o comillas dobles si es posible: "I'm Groot").
+1. **SI EXISTE**: Cargá `.specify/memory/constitution.md` para conocer los principios del proyecto y las restricciones de gobernanza.
+1. Del script ejecutado, extraé la ruta a **tasks**.
+1. Obtené el remoto de Git ejecutando:
 
 ```bash
 git config --get remote.origin.url
 ```
 
 > [!CAUTION]
-> ONLY PROCEED TO NEXT STEPS IF THE REMOTE IS A GITHUB URL
+> SOLO CONTINUÁ CON LOS PASOS SIGUIENTES SI EL REMOTO ES UNA URL DE GITHUB
 
-1. **Fetch existing issues for deduplication**: Before creating anything, build the set of task IDs you are about to process from `tasks.md` (each is a `T` followed by **at least** three digits, e.g. `T001` — `/speckit-converge` assigns new IDs with `T{M+1:03d}`, which is a floor rather than a cap, so once a file has more than 999 tasks the IDs are four digits or longer). Then use the GitHub MCP server's `list_issues` tool to look for issues that already cover those IDs. Do not pass a `state` value, since omitting it makes the tool return both open and closed issues. Request `perPage: 100` to keep the number of calls down, and since the tool uses cursor-based pagination, request pages with the `after` parameter (using the `endCursor` from the previous response). For each issue title, match it against the task ID pattern `\bT\d{3,}\b` (the `{3,}` accepts four-digit and longer IDs — with `\d{3}` a title containing `T1000` would not match at all, because the trailing `\b` cannot fall between two digits, so that task would be silently neither deduplicated nor created; word boundaries still stop a token like `ST001` from matching, and force the whole digit run to be consumed so `T100` can never match inside `T1000`; this also recognises titles written as `T001 ...`, `T001: ...` or `[T001] ...`) and, when it matches one of your task IDs, mark that ID as already having an issue. Stop paginating as soon as every task ID has been matched, or when there are no more pages, so you do not keep fetching the whole repository's issue history once all task IDs are accounted for. This bounds the number of calls on repos with large issue histories and still prevents duplicates when the command is re-run after `tasks.md` is regenerated or the skill is re-invoked.
-1. For each task in the list, use the GitHub MCP server to create a new issue in the repository that is representative of the Git remote. Task lines in `tasks.md` start with a markdown checkbox, so first strip the leading `- [ ]` (and any `[P]` / `[US#]` markers) to recover the task ID and its description. Create the issue with a single canonical title of the form `T001: <description>`, with the ID written once followed by the task description (for example, the line `- [ ] T001 Create project structure` becomes the title `T001: Create project structure`).
-   - **Skip** any task whose ID is already present in the set of existing issues from the previous step, and report it (for example, `T001 already has an issue, skipping`).
-   - Only create issues for tasks that do not yet have a matching issue.
+1. **Obtener los issues existentes para deduplicar**: Antes de crear nada, armá el conjunto de IDs de tarea que vas a procesar a partir de `tasks.md` (cada uno es una `T` seguida de **al menos** tres dígitos, p. ej. `T001`; `/speckit-converge` asigna los IDs nuevos con `T{M+1:03d}`, que es un piso y no un tope, así que cuando un archivo supera las 999 tareas los IDs tienen cuatro dígitos o más). Luego usá la herramienta `list_issues` del servidor MCP de GitHub para buscar los issues que ya cubren esos IDs. No pases un valor de `state`, ya que omitirlo hace que la herramienta devuelva tanto los issues abiertos como los cerrados. Pedí `perPage: 100` para reducir la cantidad de llamadas y, como la herramienta usa paginación por cursor, pedí las páginas con el parámetro `after` (usando el `endCursor` de la respuesta anterior). Para el título de cada issue, buscá coincidencias con el patrón de ID de tarea `\bT\d{3,}\b` (el `{3,}` acepta IDs de cuatro dígitos o más: con `\d{3}`, un título que contenga `T1000` no coincidiría en absoluto, porque el `\b` final no puede caer entre dos dígitos, y esa tarea quedaría silenciosamente sin deduplicar y sin crear; los límites de palabra igualmente impiden que un token como `ST001` coincida y obligan a consumir toda la secuencia de dígitos, de modo que `T100` nunca puede coincidir dentro de `T1000`; esto también reconoce títulos escritos como `T001 ...`, `T001: ...` o `[T001] ...`) y, cuando coincida con uno de tus IDs de tarea, marcá ese ID como que ya tiene un issue. Dejá de paginar apenas todos los IDs de tarea hayan coincidido, o cuando no queden más páginas, para no seguir trayendo todo el historial de issues del repositorio una vez que todos los IDs estén contabilizados. Esto acota la cantidad de llamadas en repositorios con historiales de issues grandes y aun así evita duplicados cuando el comando se vuelve a ejecutar después de regenerar `tasks.md` o cuando se vuelve a invocar el skill.
+1. Para cada tarea de la lista, usá el servidor MCP de GitHub para crear un issue nuevo en el repositorio que corresponda al remoto de Git. Las líneas de tareas en `tasks.md` empiezan con una casilla de markdown, así que primero quitá el `- [ ]` inicial (y cualquier marcador `[P]` / `[US#]`) para recuperar el ID de la tarea y su descripción. Creá el issue con un único título canónico de la forma `T001: <descripción>`, con el ID escrito una sola vez seguido de la descripción de la tarea (por ejemplo, la línea `- [ ] T001 Crear la estructura del proyecto` se convierte en el título `T001: Crear la estructura del proyecto`).
+   - **Omití** toda tarea cuyo ID ya esté presente en el conjunto de issues existentes del paso anterior, e informalo (por ejemplo, `T001 ya tiene un issue, se omite`).
+   - Creá issues solo para las tareas que todavía no tengan un issue que coincida.
 
 > [!CAUTION]
-> UNDER NO CIRCUMSTANCES EVER CREATE ISSUES IN REPOSITORIES THAT DO NOT MATCH THE REMOTE URL
+> BAJO NINGUNA CIRCUNSTANCIA CREES ISSUES EN REPOSITORIOS QUE NO COINCIDAN CON LA URL DEL REMOTO
 
-## Post-Execution Checks
+## Verificaciones posteriores a la ejecución
 
-**Check for extension hooks (after tasks-to-issues conversion)**:
-Check if `.specify/extensions.yml` exists in the project root.
-- If it exists, read it and look for entries under the `hooks.after_taskstoissues` key
-- If the YAML cannot be parsed or is invalid, do not skip silently: tell the user that `.specify/extensions.yml` could not be read (include the parser error) and that no hooks were checked, including any mandatory (`optional: false`) hooks registered there, then continue normally
-- Filter out hooks where `enabled` is explicitly `false`. Treat hooks without an `enabled` field as enabled by default.
-- For each remaining hook, do **not** attempt to interpret or evaluate hook `condition` expressions:
-  - If the hook has no `condition` field, or it is null/empty, treat the hook as executable
-  - If the hook defines a non-empty `condition`, skip the hook and leave condition evaluation to the HookExecutor implementation
-- When constructing command invocations from hook command names, replace dots (`.`) with hyphens (`-`). For example, `speckit.git.commit` → `/speckit-git-commit`.
-- For each executable hook, output the following based on its `optional` flag:
-  - **Optional hook** (`optional: true`):
+**Buscar hooks de extensión (después de la conversión de tareas a issues)**:
+Verificá si existe `.specify/extensions.yml` en la raíz del proyecto.
+- Si existe, leelo y buscá las entradas bajo la clave `hooks.after_taskstoissues`
+- Si el YAML no se puede parsear o no es válido, no lo omitas en silencio: avisale al usuario que no se pudo leer `.specify/extensions.yml` (incluí el error del parser) y que no se verificó ningún hook, incluidos los obligatorios (`optional: false`) registrados ahí, y luego continuá normalmente
+- Descartá los hooks cuyo campo `enabled` sea explícitamente `false`. Los hooks sin campo `enabled` se consideran habilitados por defecto.
+- Para cada hook restante, **no** intentes interpretar ni evaluar las expresiones del campo `condition`:
+  - Si el hook no tiene campo `condition`, o es nulo/vacío, tratá el hook como ejecutable
+  - Si el hook define un `condition` no vacío, omití el hook y dejá la evaluación de la condición a la implementación de HookExecutor
+- Al armar las invocaciones de comandos a partir de los nombres de comando de los hooks, reemplazá los puntos (`.`) por guiones (`-`). Por ejemplo, `speckit.git.commit` → `/speckit-git-commit`.
+- Para cada hook ejecutable, emití lo siguiente según su indicador `optional`:
+  - **Hook opcional** (`optional: true`):
     ```
-    ## Extension Hooks
+    ## Hooks de extensión
 
-    **Optional Hook**: {extension}
-    Command: `/{command}`
-    Description: {description}
+    **Hook opcional**: {extension}
+    Comando: `/{command}`
+    Descripción: {description}
 
     Prompt: {prompt}
-    To execute: `/{command}`
+    Para ejecutarlo: `/{command}`
     ```
-  - **Mandatory hook** (`optional: false`):
+  - **Hook obligatorio** (`optional: false`):
     ```
-    ## Extension Hooks
+    ## Hooks de extensión
 
-    **Automatic Hook**: {extension}
-    Executing: `/{command}`
+    **Hook automático**: {extension}
+    Ejecutando: `/{command}`
     EXECUTE_COMMAND: {command}
     ```
-    After emitting the block above you MUST actually invoke the hook and wait for it to finish before continuing. Run it the same way you would run the command yourself in this agent/session (the invocation may differ from the literal `{command}` id shown above, e.g. a skills-mode agent runs it as `/skill:speckit-...` or `$speckit-...`). Emitting the block alone does not run the hook.
-- If no hooks are registered or `.specify/extensions.yml` does not exist, skip silently
+    Después de emitir el bloque anterior DEBES invocar realmente el hook y esperar a que termine antes de continuar. Ejecutalo de la misma forma en que ejecutarías el comando vos mismo en este agente/sesión (la invocación puede diferir del id literal `{command}` mostrado arriba; por ejemplo, un agente en modo skills lo ejecuta como `/skill:speckit-...` o `$speckit-...`). Emitir el bloque por sí solo no ejecuta el hook.
+- Si no hay hooks registrados o no existe `.specify/extensions.yml`, omití este paso en silencio

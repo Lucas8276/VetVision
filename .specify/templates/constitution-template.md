@@ -1,50 +1,50 @@
-# [PROJECT_NAME] Constitution
-<!-- Example: Spec Constitution, TaskFlow Constitution, etc. -->
+# Constitution de [PROJECT_NAME]
+<!-- Ejemplo: Constitution de Spec, Constitution de TaskFlow, etc. -->
 
-## Core Principles
+## Principios fundamentales
 
 ### [PRINCIPLE_1_NAME]
-<!-- Example: I. Library-First -->
+<!-- Ejemplo: I. Biblioteca primero -->
 [PRINCIPLE_1_DESCRIPTION]
-<!-- Example: Every feature starts as a standalone library; Libraries must be self-contained, independently testable, documented; Clear purpose required - no organizational-only libraries -->
+<!-- Ejemplo: Toda funcionalidad comienza como una biblioteca autónoma; las bibliotecas deben ser autocontenidas, probables de forma independiente y documentadas; se requiere un propósito claro: nada de bibliotecas solo organizativas -->
 
 ### [PRINCIPLE_2_NAME]
-<!-- Example: II. CLI Interface -->
+<!-- Ejemplo: II. Interfaz de línea de comandos -->
 [PRINCIPLE_2_DESCRIPTION]
-<!-- Example: Every library exposes functionality via CLI; Text in/out protocol: stdin/args → stdout, errors → stderr; Support JSON + human-readable formats -->
+<!-- Ejemplo: Toda biblioteca expone su funcionalidad por CLI; protocolo de texto de entrada/salida: stdin/argumentos → stdout, errores → stderr; soportar JSON y formatos legibles por personas -->
 
 ### [PRINCIPLE_3_NAME]
-<!-- Example: III. Test-First (NON-NEGOTIABLE) -->
+<!-- Ejemplo: III. Pruebas primero (INNEGOCIABLE) -->
 [PRINCIPLE_3_DESCRIPTION]
-<!-- Example: TDD mandatory: Tests written → User approved → Tests fail → Then implement; Red-Green-Refactor cycle strictly enforced -->
+<!-- Ejemplo: TDD obligatorio: se escriben las pruebas → las aprueba el usuario → las pruebas fallan → recién entonces se implementa; ciclo Rojo-Verde-Refactor aplicado estrictamente -->
 
 ### [PRINCIPLE_4_NAME]
-<!-- Example: IV. Integration Testing -->
+<!-- Ejemplo: IV. Pruebas de integración -->
 [PRINCIPLE_4_DESCRIPTION]
-<!-- Example: Focus areas requiring integration tests: New library contract tests, Contract changes, Inter-service communication, Shared schemas -->
+<!-- Ejemplo: Áreas que requieren pruebas de integración: pruebas de contrato de bibliotecas nuevas, cambios de contrato, comunicación entre servicios, esquemas compartidos -->
 
 ### [PRINCIPLE_5_NAME]
-<!-- Example: V. Observability, VI. Versioning & Breaking Changes, VII. Simplicity -->
+<!-- Ejemplo: V. Observabilidad, VI. Versionado y cambios incompatibles, VII. Simplicidad -->
 [PRINCIPLE_5_DESCRIPTION]
-<!-- Example: Text I/O ensures debuggability; Structured logging required; Or: MAJOR.MINOR.BUILD format; Or: Start simple, YAGNI principles -->
+<!-- Ejemplo: La E/S de texto garantiza la depurabilidad; se requiere logging estructurado; o: formato MAJOR.MINOR.BUILD; o: empezar simple, principios YAGNI -->
 
 ## [SECTION_2_NAME]
-<!-- Example: Additional Constraints, Security Requirements, Performance Standards, etc. -->
+<!-- Ejemplo: Restricciones adicionales, Requisitos de seguridad, Estándares de rendimiento, etc. -->
 
 [SECTION_2_CONTENT]
-<!-- Example: Technology stack requirements, compliance standards, deployment policies, etc. -->
+<!-- Ejemplo: Requisitos del stack tecnológico, estándares de cumplimiento, políticas de despliegue, etc. -->
 
 ## [SECTION_3_NAME]
-<!-- Example: Development Workflow, Review Process, Quality Gates, etc. -->
+<!-- Ejemplo: Flujo de desarrollo, Proceso de revisión, Puertas de calidad, etc. -->
 
 [SECTION_3_CONTENT]
-<!-- Example: Code review requirements, testing gates, deployment approval process, etc. -->
+<!-- Ejemplo: Requisitos de revisión de código, puertas de pruebas, proceso de aprobación de despliegues, etc. -->
 
-## Governance
-<!-- Example: Constitution supersedes all other practices; Amendments require documentation, approval, migration plan -->
+## Gobernanza
+<!-- Ejemplo: La constitution prevalece sobre cualquier otra práctica; las enmiendas requieren documentación, aprobación y un plan de migración -->
 
 [GOVERNANCE_RULES]
-<!-- Example: All PRs/reviews must verify compliance; Complexity must be justified; Use [GUIDANCE_FILE] for runtime development guidance -->
+<!-- Ejemplo: Todos los PR/revisiones deben verificar el cumplimiento; la complejidad debe justificarse; usar [GUIDANCE_FILE] como guía de desarrollo en tiempo de ejecución -->
 
-**Version**: [CONSTITUTION_VERSION] | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [LAST_AMENDED_DATE]
-<!-- Example: Version: 2.1.1 | Ratified: 2025-06-13 | Last Amended: 2025-07-16 -->
+**Versión**: [CONSTITUTION_VERSION] | **Ratificada**: [RATIFICATION_DATE] | **Última enmienda**: [LAST_AMENDED_DATE]
+<!-- Ejemplo: Versión: 2.1.1 | Ratificada: 2025-06-13 | Última enmienda: 2025-07-16 -->

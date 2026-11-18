@@ -16,7 +16,7 @@
       {
         "matcher": "Bash|PowerShell",
         "hooks": [
-          { "type": "command", "command": "python harness/lanzar.py hook pre-commit" }
+          { "type": "command", "command": "python \"$CLAUDE_PROJECT_DIR/harness/lanzar.py\" hook pre-commit" }
         ]
       }
     ],
@@ -24,7 +24,7 @@
       {
         "matcher": "Edit|Write",
         "hooks": [
-          { "type": "command", "command": "python harness/lanzar.py hook post-edit" }
+          { "type": "command", "command": "python \"$CLAUDE_PROJECT_DIR/harness/lanzar.py\" hook post-edit" }
         ]
       }
     ]
