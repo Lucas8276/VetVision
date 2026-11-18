@@ -31,7 +31,7 @@ venv\Scripts\python.exe -m pytest tests/test_app_*.py -q
 59 tests, sin necesitar `models/` ni el dataset (usan modelos falsos e imágenes sintéticas). Dos
 tests se saltean si no existen `models/etapa0_region.onnx` y `.pt` (paridad ONNX/PyTorch).
 
-## Latencia medida (2026-11-17)
+## Latencia medida (2026-11-17, CPU compartida)
 
 Medido en esta máquina (CPU, sin GPU) con el modelo real y una imagen sintética, **mientras corría
 en paralelo el entrenamiento de la Corrida 4** (CPU compartida: esto es un peor caso, no el mejor):
@@ -42,9 +42,17 @@ en paralelo el entrenamiento de la Corrida 4** (CPU compartida: esto es un peor 
 | Criterio del proyecto | < 2 s por imagen |
 
 La medición exacta queda en el archivo privado citado (no se versiona el detalle porque se generó
-corriendo contra el modelo real); la conclusión es que el preprocesamiento + inferencia de la
-Etapa 0 corre bien por debajo de 2 s incluso con la CPU compartida — ver `docs/MEMORIA.md` para el
-número medido en condiciones normales (mediana 0,14 s/imagen, Corrida 3).
+corriendo contra el modelo real).
+
+## Latencia medida en condiciones normales, dentro del MVP (2026-11-18)
+
+Misma medición pero de punta a punta contra el endpoint real (`POST /api/estudios`, instancia
+temporal de la app con un directorio de datos aislado para no mezclar con estudios reales), sin
+nada más corriendo en la máquina: mediana de **0,124 s por imagen** sobre 10 repeticiones (la
+primera, 0,576 s, es el arranque en frío de la sesión de ONNX Runtime — no representativo, porque
+el proceso ya está arriba cuando el veterinario carga una radiografía). Muy por debajo del
+criterio del proyecto (< 2 s) y más rápido que la medición con CPU compartida del día anterior, como
+se esperaba. Detalle en `docs/privado/evaluacion/latencia-app-condiciones-normales.json` (privado).
 
 ## Qué falta (fuera de esta tanda)
 
